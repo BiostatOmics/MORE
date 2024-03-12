@@ -4,7 +4,22 @@
 #########################################
 
 ## By Sonia, Monica, Maider
-## 15-Oct-2023
+## 12-March-2024
+
+# Color palette of BioStatOmics ----------
+
+colorPalette <-function(n){
+  
+  pal = c('#7332a7','#d6b0e9','#3bdfa2','#d0ef3f','#d11d56','#6173db')
+  
+  if(n<=length(pal)){
+    return(pal[1:n])
+  }else{
+    mi_pal =grDevices::colorRampPalette(pal)
+    return(mi_pal(n))
+  }
+  
+}
 
 # Function to obtain all significant pairs gene-regulator per omic --------
 
@@ -628,7 +643,7 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
       # Create a scatterplot
       
       num_unique <- length(unique(df$group))+1
-      color_palette <- rev(RColorConesa::colorConesa(num_unique, palette = 'complete'))
+      color_palette <- colorPalette(num_unique)
       custom_colors <- setNames(color_palette[-1], unique(df$group))
       ggplot2::ggplot(df, aes(x = regulador, y = gen, color = group)) +
         geom_point() + scale_color_manual(values = custom_colors)+
@@ -650,7 +665,7 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
       df$regulador<-factor(df$regulador)
       
       num_unique <- length(unique(df$group))+1
-      color_palette <- rev(RColorConesa::colorConesa(num_unique, palette = 'complete'))
+      color_palette <- colorPalette(num_unique)
       custom_colors <- setNames(color_palette[-1], unique(df$group))
       # Create a scatterplot
       ggplot2::ggplot(df, aes(x = regulador, y = gen,fill=group)) + theme_minimal()+
@@ -1696,7 +1711,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
                      genes=as.vector(cts))
     
     num_unique <- ngroups+1
-    color_palette <- rev(RColorConesa::colorConesa(num_unique, palette = 'complete'))
+    color_palette <- colorPalette(num_unique)
     custom_colors <- setNames(color_palette, unique(df$Group))
     ggplot2::ggplot(data=df, aes(x=omic, y=genes, fill=Group)) +
       geom_bar(stat="identity", position=position_dodge()) +
@@ -1736,7 +1751,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
                      genes=as.vector(cts))
     
     num_unique <- ngroups+1
-    color_palette <- rev(RColorConesa::colorConesa(num_unique, palette = 'complete'))
+    color_palette <- colorPalette(num_unique)
     custom_colors <- setNames(color_palette[-1], unique(df$Group))
     ggplot2::ggplot(data=df, aes(x=omic, y=genes, fill=Group)) +
       geom_bar(stat="identity", position=position_dodge()) +
@@ -1891,7 +1906,7 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
     #Set node color and generate a color palette
     omic_c <- factor(odf[RCy3::getAllNodes(cy_network), ]$omic)
     num_unique <- length(unique(omic_c))
-    color_palette <- RColorConesa::colorConesa(num_unique, palette = 'complete')
+    color_palette <- colorPalette(num_unique)
     node_colors <- color_palette[as.integer(omic_c)]
     
     nshaps <-setdiff(RCy3::getNodeShapes(), c("TRIANGLE", "DIAMOND","RECTANGLE"))[1:num_unique]

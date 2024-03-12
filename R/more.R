@@ -16,7 +16,6 @@ library(glmnet)
 library(psych)
 library(car)
 library(stringr)
-library(RColorConesa)
 
 setClass("MORE")
 
