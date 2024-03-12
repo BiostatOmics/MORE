@@ -2110,8 +2110,8 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
   term2gene_bp<-annotation[,c(,1)]
   if(is.null(output_globregincond2)){
     #Store the genes in decreasing order
-    genes<-output_globregincond$Hubgenes
-    geneList<-table(output_globregincond$RegulationInCondition$gene)[genes]
+
+    geneList<-table(output_globregincond$RegulationInCondition$gene)
     geneList = sort(geneList, decreasing = TRUE)
     
     selected_genes <- names(geneList)
@@ -2120,11 +2120,9 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     
   } else{
     
-    genes<-output_globregincond$Hubgenes
-    geneList<-as.data.frame(table(output_globregincond$RegulationInCondition$gene)[genes])
+    geneList<-as.data.frame(table(output_globregincond$RegulationInCondition$gene))
     
-    genes2<-output_globregincond2$Hubgenes
-    geneList2<-as.data.frame(table(output_globregincond2$RegulationInCondition$gene)[genes2])
+    geneList2<-as.data.frame(table(output_globregincond2$RegulationInCondition$gene))
     
     #Create a data frame 
     all_genes <- union(geneList[,1], geneList2[,1])
