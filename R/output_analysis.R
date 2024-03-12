@@ -406,6 +406,7 @@ RegulationPerCondition = function(output){
     myresults = myresults[,-5,drop=FALSE]
     
   }
+  rownames(myresults)=NULL
   close(pb)
   return(myresults)
 }
