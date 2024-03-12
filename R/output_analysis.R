@@ -2133,9 +2133,8 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     merged_df$Count2[merged_df$Gene %in% geneList2[,1]] <- geneList2[, 2]
     rownames(merged_df)<-merged_df[,1]
     merged_df<-merged_df[,-1]
-    #Add one to all values to avoid problems when creating the ratio
-    merged_df<-merged_df+1
-    merged_df[,3]<-log2(merged_df[,2]/merged_df[,1])
+    #Create the score for the GSEA
+    merged_df[,3]<-merged_df[,2]-merged_df[,1]
     
     geneList <- setNames(merged_df[,3], rownames(merged_df))
     geneList <- sort(geneList, decreasing = TRUE)
