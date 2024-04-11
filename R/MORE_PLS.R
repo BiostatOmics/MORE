@@ -808,7 +808,7 @@ GetPLS = function(GeneExpression,
   }
 
   #Calculate HubGenes
-  significant_regulators<-GlobalSummary$ReguPerGene[,c(grep('-Sig$',colnames(GlobalSummary$ReguPerGene)))]
+  significant_regulators<-GlobalSummary$ReguPerGene[,c(grep('-Sig$',colnames(GlobalSummary$ReguPerGene))),drop=FALSE]
   s_sig_reg<-apply(significant_regulators, 1, sum)
   #Calculate third quantile
   q3<-quantile(s_sig_reg,0.75)

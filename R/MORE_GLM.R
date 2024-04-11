@@ -675,7 +675,7 @@ GetGLM = function(GeneExpression,
   }
 
   #Calculate HubGenes
-  relevant_regulators<-GlobalSummary$ReguPerGene[,c(grep('-Rel$',colnames(GlobalSummary$ReguPerGene)))]
+  relevant_regulators<-GlobalSummary$ReguPerGene[,c(grep('-Rel$',colnames(GlobalSummary$ReguPerGene))),drop=FALSE]
   s_rel_reg<-apply(relevant_regulators, 1, sum)
   #Calculate third quantile
   q3<-quantile(s_rel_reg,0.75)
