@@ -817,6 +817,7 @@ GetPLS = function(GeneExpression,
   } else{
     GlobalSummary$HubGenes = intersect(names(s_sig_reg[s_sig_reg>q3]), names(s_sig_reg[s_sig_reg>10]))
   }
+  if(all(sapply(associations,is.null))) {associations = NULL}
 
   myarguments = list(edesign = edesign, finaldesign = des.mat, groups = Group, alfa = alfa,
                      center = center, scale = scale, clinic.type = clinic.type,

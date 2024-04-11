@@ -577,6 +577,7 @@ GetISGL = function(GeneExpression,
   } else{
     GlobalSummary$HubGenes = intersect(names(s_rel_reg[s_rel_reg>q3]), names(s_rel_reg[s_rel_reg>10]))
   }
+  if(all(sapply(associations,is.null))) {associations = NULL}
 
   myarguments = list(edesign = edesign, finaldesign = des.mat, groups = Group,
                      center = center, scale = scale, clinic.type = clinic.type,
