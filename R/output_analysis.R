@@ -1571,7 +1571,7 @@ summary.MORE <-function(object, plot.more=FALSE){
     cat('Genes presented a mean of ',mean(na.omit(object$GlobalSummary$GoodnessOfFit[,'relReg'])),'relevant regulators.','\n')
     
     #Top hub genes
-    relevant_regulators<-object$GlobalSummary$ReguPerGene[,c(grep('-Rel$',colnames(object$GlobalSummary$ReguPerGene)))]
+    relevant_regulators<-object$GlobalSummary$ReguPerGene[,c(grep('-Rel$',colnames(object$GlobalSummary$ReguPerGene))),drop=FALSE]
     #globally
     
     s_rel_reg<-apply(relevant_regulators, 1, sum)
@@ -1600,7 +1600,7 @@ summary.MORE <-function(object, plot.more=FALSE){
       mreg<-mrel_vector[rev(tail(order(mrel_vector),10))]
       for (i in 1:10) {
         par(mfrow=c(2,4))
-        plotGLM(object, gene = NULL, regulator = names(msig)[i], plotPerOmic = FALSE ,order = FALSE, gene.col = 'skyblue', regu.col = 'tan1', verbose = FALSE)
+        plotGLM(object, gene = NULL, regulator = names(mreg)[i], plotPerOmic = FALSE ,order = FALSE, gene.col = 'skyblue', regu.col = 'tan1', verbose = FALSE)
       }
     }
   }
@@ -1608,7 +1608,7 @@ summary.MORE <-function(object, plot.more=FALSE){
     cat('Genes presented a mean of ',mean(na.omit(object$GlobalSummary$GoodnessOfFit[,'sigReg'])),'significant regulators.','\n')
     
     #Top hub genes
-    significant_regulators<-object$GlobalSummary$ReguPerGene[,c(grep('-Sig$',colnames(object$GlobalSummary$ReguPerGene)))]
+    significant_regulators<-object$GlobalSummary$ReguPerGene[,c(grep('-Sig$',colnames(object$GlobalSummary$ReguPerGene))),drop=FALSE]
     #globally
     
     s_sig_reg<-apply(significant_regulators, 1, sum)
