@@ -1741,7 +1741,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
     custom_colors <- setNames(color_palette[-1], unique(df$Group))
     ggplot2::ggplot(data=df, aes(x=omic, y=genes, fill=Group)) +
       geom_bar(stat="identity", position=position_dodge()) +
-      theme_minimal()+scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic,'regulations')) +
+      theme_minimal()+scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic,'regulators')) +
       scale_fill_manual(values = custom_colors)+
       scale_y_continuous(limits = c(0, max(df$genes) + 1)) +
       labs(x="Omic", y = "% significant regulations") +
