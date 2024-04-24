@@ -27,6 +27,7 @@ biostat_cols <- function(...) {
 #' Biostatomics color palette
 biostat_palettes <- list(
   `main`  = biostat_cols("purple", "violet", "green","yellow","red","blue"),
+  `complete` = biostat_cols("violet","green"),
   `cblindfriendly`= biostat_cols("b_dgreen", "b_lgreen","violet","b_yellow","b_orange"),
   `sunshine`= biostat_cols("b_orange", "blue"),
   
