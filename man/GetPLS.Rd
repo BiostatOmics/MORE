@@ -23,7 +23,8 @@ GetPLS(
   scaletype = "auto",
   p.method = "jack",
   vip = 0.8,
-  method = "pls1"
+  method = "pls1",
+  parallel = FALSE
 )
 }
 \arguments{

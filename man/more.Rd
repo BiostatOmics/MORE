@@ -27,7 +27,8 @@ more(
   alfa.pls = 0.05,
   p.method.pls = "jack",
   vip.pls = 0.8,
-  method = "glm"
+  method = "glm",
+  parallel = FALSE
 )
 }
 \arguments{
@@ -119,6 +120,8 @@ By default, jack.}
 \item isgl : Applies a Generalized Linear Model (GLM) with Iterative Sparse Group Lasso (ISGL) regularization.
 }
 By default, glm.}
+
+\item{parallel}{If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter. Parallelization is only implemented for glm and pls1 methods.}
 }
 \value{
 List containing the following elements:

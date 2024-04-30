@@ -16,6 +16,7 @@ library(glmnet)
 library(psych)
 library(car)
 library(stringr)
+library(furrr)
 
 setClass("MORE")
 
@@ -113,6 +114,7 @@ isBinclinic <-function(x){
 #' \item isgl : Applies a Generalized Linear Model (GLM) with Iterative Sparse Group Lasso (ISGL) regularization.
 #' }
 #' By default, glm.
+#' @param parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter. Parallelization is only implemented for glm and pls1 methods.
 #' @return List containing the following elements:
 #' \itemize{
 #' \item ResultsPerGene : List with as many elements as genes in \code{\link{GeneExpression}}. For each gene, it includes information about gene values, considered variables, estimated coefficients,
@@ -162,7 +164,8 @@ more <-function(GeneExpression,
                 alfa.pls = 0.05,
                 p.method.pls = 'jack',
                 vip.pls = 0.8,
-                method  ='glm'){
+                method  ='glm',
+                parallel = FALSE){
   
   if(is.null(omic.type)){
     #Create internally omic.type vector
@@ -202,7 +205,8 @@ more <-function(GeneExpression,
                   min.variation = min.variation,
                   col.filter = col.filter.glm,
                   correlation = correlation.glm,
-                  scaletype = scaletype))
+                  scaletype = scaletype,
+                  parallel = parallel))
     
   }
   
@@ -239,7 +243,8 @@ more <-function(GeneExpression,
                   scaletype = scaletype,
                   p.method =p.method.pls, 
                   vip = vip.pls,
-                  method = method))
+                  method = method,
+                  parallel = parallel))
 
 
   }

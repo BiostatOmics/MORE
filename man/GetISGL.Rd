@@ -27,16 +27,16 @@ GetISGL(
 experimental samples in columns. Row names must be the gene IDs.}
 
 \item{data.omics}{List where each element corresponds to a different omic data type to be considered (miRNAs,
-transcription factors, methylation, etc.). The names of the list will represent the omics, and each element in 
+transcription factors, methylation, etc.). The names of the list will represent the omics, and each element in
 the list should be a data matrix with omic regulators in rows and samples in columns.}
 
 \item{associations}{List where each element corresponds to a different omic data type (miRNAs,
-transcription factors, methylation, etc.). The names of the list will represent the omics. Each element in 
+transcription factors, methylation, etc.). The names of the list will represent the omics. Each element in
 the list should be a data frame with 2 columns (optionally 3), describing the potential interactions between genes
 and regulators for that omic. First column must contain the genes (or features in
 GeneExpression object), second column must contain the regulators, and an optional third column can
 be added to describe the type of interaction (e.g., for methylation, if a CpG site is located in
-the promoter region of the gene, in the first exon, etc.). If the user lacks prior knowledge of the potential regulators, they can set the parameter to NULL. 
+the promoter region of the gene, in the first exon, etc.). If the user lacks prior knowledge of the potential regulators, they can set the parameter to NULL.
 In this case, all regulators in \code{\link{data.omics}} will be treated as potential regulators for all genes. In this case, for computational efficiency, it is recommended to use pls2 \code{\link{method}}.
 Additionally, if the users have prior knowledge for certain omics and want to set other omics to NULL, they can do so.}
 
@@ -45,7 +45,7 @@ in \code{\link{GeneExpression}}) and columns must be the experimental variables 
 
 \item{clinic}{Data.frame with all clinical variables to consider,with samples in rows and variables in columns.}
 
-\item{clinic.type}{Vector which indicates the type of data of variables introduced in \code{\link{clinic}}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
+\item{clinic.type}{Vector which indicates the type of data of variables introduced in \code{\link{clinic}}. The user should code as 0 numeric variables and as 1 categorical or binary variables.
 By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.}
 
 \item{center}{By default TRUE. It determines whether centering is applied to \code{\link{data.omics}}.}
@@ -54,10 +54,10 @@ By default is set to NULL. In this case, the data type will be predicted automat
 
 \item{interactions.reg}{If TRUE, the model includes interactions between regulators and experimental variables. By default, TRUE.}
 
-\item{min.variation}{For numerical regulators, it specifies the minimum change required across conditions to retain the regulator in 
-the regression models. In the case of binary regulators, if the proportion of the most common value is equal to or inferior this value, 
-the regulator is considered to have low variation and will be excluded from the regression models. The user has the option to set a single 
-value to apply the same filter to all omics, provide a vector of the same length as omics if they want to specify different levels for each omics, 
+\item{min.variation}{For numerical regulators, it specifies the minimum change required across conditions to retain the regulator in
+the regression models. In the case of binary regulators, if the proportion of the most common value is equal to or inferior this value,
+the regulator is considered to have low variation and will be excluded from the regression models. The user has the option to set a single
+value to apply the same filter to all omics, provide a vector of the same length as omics if they want to specify different levels for each omics,
 or use 'NA' when they want to apply a minimum variation filter but are uncertain about the threshold. By default, 0.}
 
 \item{gr.method}{Methodology to apply to create the gorups. By default, cor.}
@@ -70,7 +70,7 @@ List containing the following elements:
 \item ResultsPerGene : List with as many elements as genes in \code{\link{GeneExpression}}. For each gene, it includes information about gene values, considered variables, estimated coefficients,
                    detailed information about all regulators, and regulators identified as relevant (in glm scenario) or significant (in pls scenarios).
 \item GlobalSummary : List with information about the fitted models, including model metrics, information about regulators, genes without models, regulators, master regulators and hub genes.
-\item Arguments : List containing all the arguments used to generate the models.                
+\item Arguments : List containing all the arguments used to generate the models.
 }
 }
 \description{

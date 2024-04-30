@@ -21,7 +21,8 @@ GetGLM(
   min.variation = 0,
   col.filter = "cor",
   correlation = 0.7,
-  scaletype = "auto"
+  scaletype = "auto",
+  parallel = FALSE
 )
 }
 \arguments{

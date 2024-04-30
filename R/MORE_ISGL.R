@@ -115,12 +115,12 @@ GetISGL = function(GeneExpression,
 
   # Checking that the number of samples per omic is equal to number of samples for gene expression and the number of samples for edesign
   for (i in 1:length(names(data.omics))){
-    if(!length(colnames(data.omics[[i]])) == length(colnames(GeneExpression)) ) {
+    if(!ncol(data.omics[[i]]) == ncol(GeneExpression) ) {
       stop("ERROR: Samples in data.omics must be the same as in GeneExpression and in edesign")
     }
   }
   if(!is.null(edesign)){
-    if(!length(colnames(GeneExpression)) == length(rownames(edesign)) ) {
+    if(!ncol(GeneExpression) == nrow(edesign) ) {
       stop("ERROR: Samples in data.omics must be the same as in GeneExpression and in edesign")
     }
   }
@@ -255,7 +255,7 @@ GetISGL = function(GeneExpression,
   genesNOreg = Reduce(intersect, genesNOreg)
   GeneExpression = GeneExpression[!(rownames(GeneExpression) %in% genesNOreg),]
   if (length(genesNOreg) > 0){
-    cat(length(genesNOreg), "genes had no initial regulators. Models will be computed for", length(rownames(GeneExpression)), 'genes.\n')
+    cat(length(genesNOreg), "genes had no initial regulators. Models will be computed for", nrow(GeneExpression), 'genes.\n')
   }
 
   ## Removing constant genes
