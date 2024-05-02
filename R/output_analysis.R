@@ -621,17 +621,17 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
       df <- data.frame(
         gen = unlist(output$arguments$GeneExpression[gene,,drop=TRUE]),
         regulador = unlist(output$arguments$dataOmics[[omic]][regulator,,drop=TRUE]),
-        group = output$arguments$groups)
+        Group = output$arguments$groups)
       
       output_regpcond = RegulationPerCondition(output)
       output_regpcond = output_regpcond[output_regpcond$gene==gene & output_regpcond$regulator==regulator,]
       #coefs<-data.frame(group=unique(output$arguments$groups), intercept =rep(output$ResultsPerGene[[gene]]$coefficients[[1]][1],length(unique(output$arguments$groups))),slope = unlist(output_regpcond[,6:ncol(output_regpcond)] ))
       # Create a scatterplot
       
-      num_unique <- length(unique(df$group))+1
+      num_unique <- length(unique(df$Group))+1
       color_palette <- colorbiostat(num_unique)
-      custom_colors <- setNames(color_palette[-1], unique(df$group))
-      ggplot2::ggplot(df, aes(x = regulador, y = gen, color = group)) +
+      custom_colors <- setNames(color_palette[-1], unique(df$Group))
+      ggplot2::ggplot(df, aes(x = regulador, y = gen, color = Group)) +
         geom_point() + scale_color_manual(values = custom_colors)+
         theme_minimal()+
         #geom_abline(intercept = c(coefs[1,2],coefs[2,2],coefs[3,2]),slope = c(coefs[1,3],coefs[2,3],coefs[3,3]),color=c('#15918A','#74CDF0','#EE446F'),linetype=c('solid','solid',"dashed"))+
@@ -647,16 +647,16 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
       df <- data.frame(
         gen = unlist(output$arguments$GeneExpression[gene,,drop=TRUE]),
         regulador = unlist(output$arguments$dataOmics[[omic]][regulator,,drop=TRUE]),
-        group = output$arguments$groups)
+        Group = output$arguments$groups)
       df$regulador<-factor(df$regulador)
       
-      num_unique <- length(unique(df$group))+1
+      num_unique <- length(unique(df$Group))+1
       color_palette <- colorbiostat(num_unique)
-      custom_colors <- setNames(color_palette[-1], unique(df$group))
+      custom_colors <- setNames(color_palette[-1], unique(df$Group))
       # Create a scatterplot
-      ggplot2::ggplot(df, aes(x = regulador, y = gen,fill=group)) + theme_minimal()+
+      ggplot2::ggplot(df, aes(x = regulador, y = gen,fill=Group)) + theme_minimal()+
         geom_boxplot() + scale_fill_manual(values = custom_colors)+  scale_color_manual(values = custom_colors)+
-        scale_x_discrete(labels = c('0','1')) + stat_summary(aes(color = group),fun='median',geom = 'point', position = position_dodge(width = 0.75))+
+        scale_x_discrete(labels = c('0','1')) + stat_summary(aes(color = Group),fun='median',geom = 'point', position = position_dodge(width = 0.75))+
       labs( x = paste("Regulator \n",regulator), y = paste("Gene Expression\n",gene))
       
     }
@@ -1772,6 +1772,9 @@ globalreg_plot<-function(output_regincond, by_network=FALSE){
   #by_network: By faulta, FALSE. If TRUE plots the results in a network
 
   regulators<-output_regincond$GlobalRegulators
+  if (length(regulators)==0){
+    stop("ERROR:No global regulator was identified for this condition")
+  }
   if (by_network){
     
     #Take group column in RegulationPerCondition
@@ -1789,7 +1792,7 @@ globalreg_plot<-function(output_regincond, by_network=FALSE){
     mygraph<-igraph::set.edge.attribute(mygraph, 'sign', index = igraph::E(mygraph), value = df[,4])
     igraph::E(mygraph)$sign<-df[,4]
     
-    igraph::plot.igraph(mygraph,vertex.label.cex= 0.4, vertex.size = 4,vertex.color=as.factor(igraph::V(mygraph)$omic),edge.color = ifelse(igraph::E(mygraph)$sign >0, "blue", "red"), main='Gen - Global regulators network')
+    igraph::plot.igraph(mygraph,vertex.label.cex= 0.4, vertex.size = 4,vertex.color=as.factor(igraph::V(mygraph)$omic),edge.color = ifelse(igraph::E(mygraph)$sign >0, "blue", "red"), main='Gene - Global regulators network')
     legend("topright", legend = unique(igraph::V(mygraph)$omic), col = categorical_pal(length(unique(as.factor(igraph::V(mygraph)$omic)))), pch = 16, cex = 1.5, bty = "n")
     
     
