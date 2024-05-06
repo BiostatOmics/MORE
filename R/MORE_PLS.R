@@ -225,7 +225,7 @@ GetPLS = function(GeneExpression,
     repeated = intersect(rownames(GeneExpression), rownames(data.omics[[i]]))
     
     if(length(repeated) > 0) {
-      cat(x, "and Gene Expression omics have shared identifiers in regulators:", repeated, "\n")
+      cat(names(data.omics)[i], "and Gene Expression omics have shared identifiers in regulators:", repeated, "\n")
       #Change the name in the association matrix only if is not NULL
       if(!is.null(associations[[i]])){
         associations[[i]][[2]][associations[[i]][[2]]%in%repeated] = paste(names(data.omics)[i],'-', associations[[i]][[2]][associations[[i]][[2]]%in%repeated], sep='')
@@ -385,7 +385,7 @@ GetPLS = function(GeneExpression,
     
     options(future.globals.maxSize = 4000*1024^2)
     if(!isFALSE(parallel)){
-      if(is.numeric(paralllel)){
+      if(is.numeric(parallel)){
         if(.Platform$OS.type == "unix") {
           future::plan("multicore", workers = parallel)
         }else{
