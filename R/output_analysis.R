@@ -623,10 +623,7 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
         regulador = unlist(output$arguments$dataOmics[[omic]][regulator,,drop=TRUE]),
         Group = output$arguments$groups)
       
-      output_regpcond = RegulationPerCondition(output)
-      output_regpcond = output_regpcond[output_regpcond$gene==gene & output_regpcond$regulator==regulator,]
-      #coefs<-data.frame(group=unique(output$arguments$groups), intercept =rep(output$ResultsPerGene[[gene]]$coefficients[[1]][1],length(unique(output$arguments$groups))),slope = unlist(output_regpcond[,6:ncol(output_regpcond)] ))
-      # Create a scatterplot
+    # Create a scatterplot
       
       num_unique <- length(unique(df$Group))+1
       color_palette <- colorbiostat(num_unique)
