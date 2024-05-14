@@ -1727,9 +1727,9 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
         
       }
     }
-
+    group_levels <- unique(output$arguments$groups)
     #Create a df with the percentage of genes with significant regulators by omic and condition
-    df <- data.frame(Group=rep(unique(output$arguments$groups), times=length(omics)),
+    df <- data.frame(Group=factor(rep(group_levels, times=length(omics)), levels = group_levels),
                      omic=rep(names(output$arguments$dataOmics),each = ngroups),
                      genes=as.vector(cts))
     
