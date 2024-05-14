@@ -1687,7 +1687,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
     
     cts<-cts/totalgenes*100
     
-    group_levels <- c('Global', unique(output$arguments$groups))
+    group_levels <- c('Global',  gsub('Group_','',colnames(output_regpcond)[pos:ncol(output_regpcond)]))
     #Create a df with the percentage of genes with significant regulators by omic and condition
     df <- data.frame(Group=factor(rep(group_levels, times = length(omics) + 1), levels = group_levels),
                      omic=rep(c('Any',names(output$arguments$dataOmics)),each = ngroups+1),
@@ -1727,7 +1727,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
         
       }
     }
-    group_levels <- unique(output$arguments$groups)
+    group_levels <- gsub('Group_','',colnames(output_regpcond)[pos:ncol(output_regpcond)])
     #Create a df with the percentage of genes with significant regulators by omic and condition
     df <- data.frame(Group=factor(rep(group_levels, times=length(omics)), levels = group_levels),
                      omic=rep(names(output$arguments$dataOmics),each = ngroups),
