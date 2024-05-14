@@ -1677,7 +1677,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
         }else if(j==1){
           cts[i,j] = length(unique(output_regpcond[output_regpcond[,pos+(i-2)]!=0,]$gene))
         }else{
-          cts[i,j] = length(unique(output_regpcond[intersect(which(output_regpcond[,pos+(i-2)]!=0),which(output_regpcond$omic==omics[j-1])),]$gene))
+          cts[i,j] = length(intersect(unique(output_regpcond[output_regpcond[,pos+(i-2)]!=0,]$gene), unique(output_regpcond[output_regpcond$omic==omics[j-1],]$gene)))
         }
         
       }
@@ -1723,7 +1723,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
       #Create the global values
       for (j in 1:length(omics)){
         
-        cts[i,j] = length(output_regpcond[intersect(which(output_regpcond[,pos+i-1]!=0),which(output_regpcond$omic==omics[j])),]$regulator)/ total_reg_omic[j]*100
+        cts[i,j] = length(intersect(output_regpcond[output_regpcond[,pos+i-1]!=0,]$regulator,output_regpcond[output_regpcond$omic==omics[j],]$regulator))/total_reg_omic[j]*100
         
       }
     }
