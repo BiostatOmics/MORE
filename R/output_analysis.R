@@ -1716,7 +1716,7 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
     total_reg_omic <- if (is.null(output$arguments$associations)) {
       sapply(output$arguments$dataOmics, nrow)
     } else {
-      sapply(omics, function(x) nrow(output$arguments$associations[[x]][output$arguments$associations[[x]][,2] %in% rownames(output$arguments$dataOmics[[x]]),]))
+      sapply(omics, function(x) length(intersect(rownames(output$arguments$dataOmics[[x]]) ,output$arguments$associations[[x]][,2])))
     }
     
     for (i in 1:ngroups){
