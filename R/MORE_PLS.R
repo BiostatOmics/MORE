@@ -259,6 +259,7 @@ GetPLS = function(GeneExpression,
         }
       }
     }
+    rm(repeated)
   }
   
   #Checking there are not -Inf/Inf values and eliminate genes/regulator that contain them
@@ -374,7 +375,7 @@ GetPLS = function(GeneExpression,
   colnames(GlobalSummary$ReguPerGene) = c(paste(names(data.omics), "Ini", sep = "-"),
                                           paste(names(data.omics), "Mod", sep = "-"),
                                           paste(names(data.omics), "Sig", sep = "-"))
-  
+  rm(infproblemgene);rm(infproblemreg);rm(problema);rm(problemas);rm(orderproblem);rm(nameproblem);rm(genesNA);rm(genesInf);rm(genesNOreg);rm(genesNotNA);rm(constantGenes);rm(notConstant);gc()
   ## Specific results for each gene
   ResultsPerGene=vector("list", length=length(Allgenes))
   names(ResultsPerGene) = Allgenes
@@ -436,6 +437,9 @@ GetPLS = function(GeneExpression,
     RetRegul.gene = RetRegul$Results  ## RetRegul$TableGene: nr reg per omic
     ## Some of these reg will be removed, because they are not in data.omics
     
+    #Add information about initial potential regulators
+    GlobalSummary$ReguPerGene[1:nrow(GlobalSummary$ReguPerGene), grep("-Ini", colnames(GlobalSummary$ReguPerGene))]=rep(as.numeric(RetRegul$TableGene[-1]),each=length(Allgenes))
+    
     # RetRegul.gene--> gene/regulator/omic/area
     RetRegul.gene=RetRegul.gene[RetRegul.gene[,"regulator"]!= "No-regulator", ,drop=FALSE] ## Remove rows with no-regulators
     
@@ -445,7 +449,7 @@ GetPLS = function(GeneExpression,
     ## Identify which regulators where removed because of missing values or low variation
     res = RemovedRegulators(RetRegul.gene = allRegulators,
                             myregLV=myregLV, myregNA=myregNA, data.omics=data.omics)
-    
+    rm(myregLV);rm(myregNA);rm(RetRegul.gene);rm(RetRegul);gc()
     ## Create the interactions between regulators and edesign 
     
     des.mat2 = RegulatorsInteractionsPLS2(interactions.reg, reguValues = res$RegulatorMatrix,
@@ -505,8 +509,6 @@ GetPLS = function(GeneExpression,
         ResultsPerGene[[i]]$significantRegulators = NULL
         ResultsPerGene[[i]]$allRegulators = data.frame(ResultsPerGene[[i]]$allRegulators, "Sig" = NA, stringsAsFactors = FALSE)
         
-        GlobalSummary$ReguPerGene[gene, grep("-Ini", colnames(GlobalSummary$ReguPerGene))] = as.numeric(RetRegul$TableGene[-1])
-        
         ResultsPerGene[[i]]$allRegulators = allRegulators
         ResultsPerGene[[i]]$allRegulators[,'gene']=rep(gene,nrow(ResultsPerGene[[i]]$allRegulators))
         
@@ -530,6 +532,7 @@ GetPLS = function(GeneExpression,
       
     }else{
       
+      myPLS = suppressInnecPLSdata(myPLS)
       if (p.method == 'jack'){
         pval = p.valuejack.pls2(myPLS, des.mat2, Y, alfa)
       } else {
@@ -558,8 +561,6 @@ GetPLS = function(GeneExpression,
         
         ResultsPerGene[[i]]$significantRegulators = myvariables
         
-        GlobalSummary$ReguPerGene[gene, grep("-Ini", colnames(GlobalSummary$ReguPerGene))] = as.numeric(RetRegul$TableGene[-1])
-        
         ## Counting original regulators in the model per omic              
         contando = ResultsPerGene[[i]]$allRegulators
         quitar = which(contando[,"filter"] == "MissingValue")
@@ -582,7 +583,7 @@ GetPLS = function(GeneExpression,
         }
         
         ResultsPerGene[[i]]$Y = data.frame("y" = myPLS@suppLs$y[,i,drop=FALSE], "fitted.y" = myPLS@suppLs$yPreMN[,i,drop=FALSE],
-                                           "residuals" = ropls::residuals(myPLS))
+                                           "residuals" = myPLS@suppLs$y[,i,drop=FALSE]-myPLS@suppLs$yPreMN[,i,drop=FALSE])
         colnames( ResultsPerGene[[i]]$Y) = c('y','fitted.y','residuals')
         
         

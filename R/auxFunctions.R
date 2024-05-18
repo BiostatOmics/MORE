@@ -763,35 +763,79 @@ p.valuejack<-function(pls, datospls,alfa){
 }
 
 # p-values for PLS2 models ------------------------------------------------
+suppressInnecPLSdata<-function(myPLS){
+  
+  setClass("myropls",
+           slots = list(
+             modelDF = "data.frame",
+             coefficientMN = "matrix",
+             vipVn = "numeric",
+             summaryDF = "data.frame" ,
+             suppLs = "list"
+           ))
+  
+  # Create an empty object
+  resPLS <- new("myropls")
+  
+  resPLS@modelDF = myPLS@modelDF
+  resPLS@coefficientMN = myPLS@coefficientMN
+  resPLS@vipVn = myPLS@vipVn
+  resPLS@summaryDF = myPLS@summaryDF
+  resPLS@suppLs$y = myPLS@suppLs$y
+  resPLS@suppLs$yPreMN = myPLS@suppLs$yPreMN
+  
+  return(resPLS)
+}
 
-p.coef.pls2<-function(pls,R, datospls, Y){
+p.coef.pls2 <- function(pls, R, datospls, Y){
+  
   #pls: modelo PLS generado con la libreria ropls
   #R: número de veces a repetir la prueba
   #datospls: matriz de datos utilizada para crear el modelo
-  k=pls@summaryDF$pre
-  coefmod<-pls@coefficientMN
-  a<-NULL
-  for (i in 1:R){
-    rows_ord = sample(nrow(Y), replace = FALSE)
-    Yperm=Y[rows_ord,]
-    pls.opls<-ropls::opls(datospls, Yperm, scaleC='none', predI=k,
-                   info.txtC='none', fig.pdfC='none', crossvalI=1,permI = 0)
-    a<-cbind(a,pls.opls@coefficientMN)
-  }
-  p.coefs<-matrix(2, nrow=nrow(a), ncol=ncol(Y))
-  for (i in 1:ncol(Y)) {
-    b = a[, seq(i, ncol(Y)*R, ncol(Y))]
-    
-    for(j in 1:nrow(b)){
-      coefs<-b[j,]
-      pvalor = ifelse(coefmod[j,i] > 0, (sum(coefs > coefmod[j,i]) + sum(coefs < -coefmod[j,i]) )/ R, (sum(coefs < coefmod[j,i]) + sum(coefs > -coefmod[j,i])) / R)
-      p.coefs[j,i]<-pvalor
-    }
-  }
-  rownames(p.coefs)<-rownames(coefmod)
-  colnames(p.coefs)<-colnames(coefmod)
   
-  return(p.coefs)
+  k=pls@summaryDF$pre
+  
+  #Create the count matrix
+  count_mat = matrix(0,ncol = ncol(pls@coefficientMN), nrow = nrow(pls@coefficientMN))
+  colnames(count_mat)  =colnames(pls@coefficientMN)
+  rownames(count_mat) = rownames(pls@coefficientMN)
+  
+  pb <- txtProgressBar(min = 0, max = R, style = 3)
+  
+  for (i in 1:R) {
+    setTxtProgressBar(pb, value = i)
+    rows_ord = sample(nrow(Y), replace = FALSE)
+    Yperm = Y[rows_ord,]
+    pls.opls.coef = suppressWarnings(ropls::opls(datospls, Yperm, scaleC='none', predI=k,
+                                                 info.txtC='none', fig.pdfC='none', crossvalI=1,permI = 0)@coefficientMN)
+    
+    if(nrow(pls.opls.coef)<nrow(pls@coefficientMN)){
+      exclvar = setdiff(rownames(pls@coefficientMN),rownames(pls.opls.coef))
+      b = matrix(0,ncol=ncol(pls.opls.coef),nrow = length(exclvar))
+      rownames(b) = exclvar
+      pls.opls.coef = rbind(pls.opls.coef,b)
+      
+    }
+    
+    order = match(rownames(pls@coefficientMN), rownames(pls.opls.coef))
+    pls.opls.coef = pls.opls.coef[order, ]
+    
+    #Count if the coefficient is greater or less than the saved one. Negative positions !positive_pos
+    positive_pos = pls@coefficientMN >0
+    
+    # Identify where pls.opls.coef is higher than pls@coefficientMN or less than -pls@coefficientMN
+    higher_condition <- pls.opls.coef > pls@coefficientMN | pls.opls.coef < -pls@coefficientMN
+    
+    # Identify where pls.opls.coef is less than pls@coefficientMN or higher than -pls@coefficientMN
+    less_condition <- pls.opls.coef < pls@coefficientMN | pls.opls.coef > -pls@coefficientMN
+    
+    #Add 1 to the positions
+    count_mat[positive_pos & higher_condition] = count_mat[positive_pos & higher_condition] + 1 
+    count_mat[!positive_pos & less_condition] = count_mat[!positive_pos & less_condition] + 1 
+    rm(pls.opls.coef);gc()
+  }
+  
+  return(count_mat/R)
 }
 
 p.valuejack.pls2<-function(pls, datospls, Y,alfa){
