@@ -1951,7 +1951,7 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
                          omic = c(rep('gene',length(unique(df[,'gene']))),unique(df[,c('regulator','omic')])[,2]))
       
       interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
-                                coef = df[,6], sign = ifelse(df[,5]>0,'1','-1'),
+                                coef = round(df[,6],digits = 4), sign = ifelse(df[,5]>0,'1','-1'),
                                 line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
@@ -2009,7 +2009,7 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
                          omic = c(rep('gene',length(unique(df[,'gene']))),unique(df[,c('regulator','omic')])[,2]))
       
       interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
-                                coef = round(df[,6],digits = 5), sign = ifelse(df[,5]>0,'1','-1'),
+                                coef = round(df[,6],digits = 4), sign = ifelse(df[,5]>0,'1','-1'),
                                 line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
