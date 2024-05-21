@@ -400,13 +400,20 @@ GetPLS = function(GeneExpression,
           future::plan("multisession", workers = nc)
         }
       }
+      ResultsPerGene <- furrr::future_map(1:nGenes,
+                                          ~ResultsPerGene.i(Allgenes[.],GlobalSummary,data.omics,associations,GeneExpression,omic.type,
+                                                            edesign, des.mat,myregLV,myregNA,epsilon,scale,center,scaletype,
+                                                            interactions.reg,p.method,vip,alfa),
+                                          .progress = TRUE )
+    } else{
+      ResultsPerGene <- purrr::map(1:nGenes,
+                                          ~ResultsPerGene.i(Allgenes[.],GlobalSummary,data.omics,associations,GeneExpression,omic.type,
+                                                            edesign, des.mat,myregLV,myregNA,epsilon,scale,center,scaletype,
+                                                            interactions.reg,p.method,vip,alfa),
+                                          .progress = TRUE )
     }
 
-    ResultsPerGene <- furrr::future_map(1:nGenes,
-                                        ~ResultsPerGene.i(Allgenes[.],GlobalSummary,data.omics,associations,GeneExpression,omic.type,
-                                                          edesign, des.mat,myregLV,myregNA,epsilon,scale,center,scaletype,
-                                                          interactions.reg,p.method,vip,alfa),
-                                        .progress = TRUE )
+    
     future::plan("sequential")
     names(ResultsPerGene)<-Allgenes
     
@@ -854,30 +861,30 @@ ResultsPerGene.i<-function(gene,GlobalSummary,data.omics,associations,GeneExpres
         
         
         
-      } ## Close "else" --> None regulators from begining
+      } 
       
-      if (is.null(myPLS)) {
-        
-        ResultsPerGene.i$Y = GeneExpression[gene,]
-        ResultsPerGene.i$coefficients = NULL
-        
-        ResultsPerGene.i$GoodnessOfFit = ResultsPerGene.i$GoodnessOfFit[rownames(ResultsPerGene.i$GoodnessOfFit) != gene,,drop=FALSE]
-        
-        
-      } else {
-        ResultsPerGene.i$Y = data.frame("y" = myPLS@suppLs$y, "fitted.y" = myPLS@suppLs$yPreMN,
-                                           "residuals" = ropls::residuals(myPLS))
-        colnames( ResultsPerGene.i$Y) = c('y','fitted.y','residuals')
-        
-        ResultsPerGene.i$GoodnessOfFit = c(myPLS@modelDF[,'R2Y(cum)'][myPLS@summaryDF[,'pre']],
-                                               myPLS@modelDF[,'Q2(cum)'][myPLS@summaryDF[,'pre']],
-                                               myPLS@summaryDF[,'RMSEE'],
-                                               round(abs(myPLS@summaryDF[,'RMSEE']/mean(myPLS@suppLs$y)),6),
-                                               myPLS@summaryDF[,'pre'],
-                                               as.integer(length(ResultsPerGene.i$significantRegulators)))
-        
-        
-      }
+    } ## Close "else" --> None regulators from beginning
+    
+    if (is.null(myPLS)) {
+      
+      ResultsPerGene.i$Y = GeneExpression[gene,]
+      ResultsPerGene.i$coefficients = NULL
+      
+      ResultsPerGene.i$GoodnessOfFit = ResultsPerGene.i$GoodnessOfFit[rownames(ResultsPerGene.i$GoodnessOfFit) != gene,,drop=FALSE]
+      
+      
+    } else {
+      ResultsPerGene.i$Y = data.frame("y" = myPLS@suppLs$y, "fitted.y" = myPLS@suppLs$yPreMN,
+                                      "residuals" = ropls::residuals(myPLS))
+      colnames( ResultsPerGene.i$Y) = c('y','fitted.y','residuals')
+      
+      ResultsPerGene.i$GoodnessOfFit = c(myPLS@modelDF[,'R2Y(cum)'][myPLS@summaryDF[,'pre']],
+                                         myPLS@modelDF[,'Q2(cum)'][myPLS@summaryDF[,'pre']],
+                                         myPLS@summaryDF[,'RMSEE'],
+                                         round(abs(myPLS@summaryDF[,'RMSEE']/mean(myPLS@suppLs$y)),6),
+                                         myPLS@summaryDF[,'pre'],
+                                         as.integer(length(ResultsPerGene.i$significantRegulators)))
+      
       
     }
     
