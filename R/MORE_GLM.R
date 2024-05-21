@@ -405,13 +405,20 @@ GetGLM = function(GeneExpression,
         future::plan("multisession", workers = nc)
       }
     }
+    ResultsPerGene <- furrr::future_map(1:nGenes,
+                                        ~ResultsPerGene.i.glm(Allgenes[.],GlobalSummary,data.omics,associations,GeneExpression,omic.type,
+                                                              edesign, des.mat,myregLV,myregNA,col.filter,correlation,epsilon,
+                                                              scale,center,scaletype,interactions.reg,elasticnet,family2),
+                                        .progress = TRUE,.options = furrr_options(seed = TRUE))
+  } else{
+    ResultsPerGene <- purrr::map(1:nGenes,
+                                        ~ResultsPerGene.i.glm(Allgenes[.],GlobalSummary,data.omics,associations,GeneExpression,omic.type,
+                                                              edesign, des.mat,myregLV,myregNA,col.filter,correlation,epsilon,
+                                                              scale,center,scaletype,interactions.reg,elasticnet,family2),
+                                        .progress = TRUE,.options = furrr_options(seed = TRUE))
   }
   
-  ResultsPerGene <- furrr::future_map(1:nGenes,
-                                 ~ResultsPerGene.i.glm(Allgenes[.],GlobalSummary,data.omics,associations,GeneExpression,omic.type,
-                                                   edesign, des.mat,myregLV,myregNA,col.filter,correlation,epsilon,
-                                                   scale,center,scaletype,interactions.reg,elasticnet,family2),
-                                 .progress = TRUE,.options = furrr_options(seed = TRUE))
+  
   future::plan("sequential")
   names(ResultsPerGene)<-Allgenes
   
