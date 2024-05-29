@@ -2187,6 +2187,7 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
   }
   
   y <- GSEA(geneList = geneList, TERM2GENE = term2gene_bp, TERM2NAME = term2name_bp , pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
+  dotplot(y, split = '.sign') + facet_grid(.~.sign, labeller = as_labeller(c(activated = gsub('Group_','',colnames(output_globregincond2$RegulationInCondition)[4]), suppressed = gsub('Group_','',colnames(output_globregincond$RegulationInCondition)[4]))))
   
   return(y)
 }
