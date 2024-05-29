@@ -2152,10 +2152,11 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
   
   #output_globregincond: Output object of running RegulationInCondition
   #output_globregincond2: Output object of running RegulationInCondition for other group to which compare the reference. By default, NULL.
-  #annotation: Annotation matrix with genes in the first column, GO terms in the second 
+  #annotation: Annotation matrix with genes in the first column, GO terms in the second and GO term description in the third
   #alpha: The adjusted pvalue cutoff to consider
   #p.adjust.method: One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
-  term2gene_bp<-annotation[,c(,1)]
+  term2gene_bp<-annotation[,c(2,1)]
+  term2name_bp <- unique(annotation[,c(2,3)])
   if(is.null(output_globregincond2)){
     #Store the genes in decreasing order
 
@@ -2173,10 +2174,8 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     geneList2<-as.data.frame(table(output_globregincond2$RegulationInCondition$gene))
     
     #Create a data frame 
-    all_genes <- union(geneList[,1], geneList2[,1])
-    merged_df <- data.frame(Gene = all_genes, Count1 = 0, Count2 = 0, stringsAsFactors = FALSE)
-    merged_df$Count1[merged_df$Gene %in% geneList[,1]] <- geneList[, 2]
-    merged_df$Count2[merged_df$Gene %in% geneList2[,1]] <- geneList2[, 2]
+    merged_df = merge(geneList, geneList2, by = 'Var1', all = TRUE)
+    merged_df[is.na(merged_df)] = 0
     rownames(merged_df)<-merged_df[,1]
     merged_df<-merged_df[,-1]
     #Create the score for the GSEA
@@ -2187,7 +2186,7 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     
   }
   
-  y <- GSEA(geneList = geneList, TERM2GENE = term2gene_bp, pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
+  y <- GSEA(geneList = geneList, TERM2GENE = term2gene_bp, TERM2NAME = term2name_bp , pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
   
   return(y)
 }
