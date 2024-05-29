@@ -2167,8 +2167,8 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     counts <- as.numeric(geneList)
     geneList <- setNames(counts, selected_genes)
     
-    y <- GSEA(geneList = geneList, TERM2GENE = term2gene_bp, TERM2NAME = term2name_bp , pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
-    dotplot(y, split = '.sign') 
+    y <- clusterProfiler::GSEA(geneList = geneList, TERM2GENE = term2gene_bp, TERM2NAME = term2name_bp , pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
+    clusterProfiler::dotplot(y, split = '.sign') 
     
   } else{
     
@@ -2187,8 +2187,8 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     geneList <- setNames(merged_df[,3], rownames(merged_df))
     geneList <- sort(geneList, decreasing = TRUE)
     
-    y <- GSEA(geneList = geneList, TERM2GENE = term2gene_bp, TERM2NAME = term2name_bp , pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
-    dotplot(y, split = '.sign') + facet_grid(.~.sign, labeller = as_labeller(c(activated = gsub('Group_','',colnames(output_globregincond2$RegulationInCondition)[4]), suppressed = gsub('Group_','',colnames(output_globregincond$RegulationInCondition)[4]))))
+    y <- clusterProfiler::GSEA(geneList = geneList, TERM2GENE = term2gene_bp, TERM2NAME = term2name_bp , pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
+    clusterProfiler::dotplot(y, split = '.sign') + facet_grid(.~.sign, labeller = as_labeller(c(activated = gsub('Group_','',colnames(output_globregincond2$RegulationInCondition)[4]), suppressed = gsub('Group_','',colnames(output_globregincond$RegulationInCondition)[4]))))
     
   }
   
