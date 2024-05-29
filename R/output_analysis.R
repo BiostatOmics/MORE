@@ -2063,12 +2063,13 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' @param annotation Annotation matrix with genes in the first column, GO terms in the second 
 #' @param alpha The adjusted pvalue cutoff to consider
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
+#' @param parallel parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter.
 #' 
 #' @return Plot of the network induced from more.
 #' @export
 
 ORA_more = function(output, output_globregincond, annotation, alpha = 0.05,
-                    p.adjust.method = "fdr") {
+                    p.adjust.method = "fdr", parallel = FALSE) {
   
   # output: Output object of running more function 
   # output_globregincond: Output object of running RegulationInCondition function
@@ -2082,25 +2083,53 @@ ORA_more = function(output, output_globregincond, annotation, alpha = 0.05,
   annotation = annotation[annotation[,1] %in% reference,]
   annotDescr = unique(annotation[,2:3])
   rownames(annotDescr) = annotDescr[,1]
-  myresults = vector("list", length = length(regulators))
-  names(myresults) = regulators
-  for (rrr in regulators) {
-    print(rrr)
-    test = unique(as.character(output_globregincond$RegulationInCondition[which(output_globregincond$RegulationInCondition[,"regulator"] == rrr),"gene"]))
-    notTest = setdiff(reference, test)
-    resuRegu = ReguEnrich1regu(test, notTest, annotation, p.adjust.method = p.adjust.method)
-    resuRegu = resuRegu[which(resuRegu$adjPval < alpha),]
-    if (nrow(resuRegu) > 0) {
-      resuRegu = data.frame("regulator" = rrr, "termDescr" = annotDescr[resuRegu[,1],2],
-                            resuRegu, stringsAsFactors = FALSE)
-    } else {
-      
-      resuRegu = NULL
+  
+  options(future.globals.maxSize = 4000*1024^2)
+  if(!isFALSE(parallel)){
+    if(is.numeric(parallel)){
+      if(.Platform$OS.type == "unix") {
+        future::plan("multicore", workers = parallel)
+      }else{
+        future::plan("multisession", workers = parallel)
+      }
+    } else{
+      nc = future::availableCores() - 1
+      if(.Platform$OS.type == "unix") {
+        future::plan("multicore", workers = nc)
+      }else{
+        future::plan("multisession", workers = nc)
+      }
     }
-    myresults[[rrr]] = resuRegu
-    rm(resuRegu); gc()
+    myresults <- furrr::future_map(1:length(regulators),
+                                   ~ORA.i(regulators[.],output_globregincond, reference, annotation, p.adjust.method, annotDescr,alpha),
+                                   .progress = TRUE )
+  } else{
+    myresults <- purrr::map(1:length(regulators),
+                            ~ORA.i(regulators[.],output_globregincond, reference, annotation, p.adjust.method, annotDescr,alpha),
+                            .progress = TRUE )
   }
+  future::plan('sequential')
+  names(myresults) = regulators
   return(myresults)
+}
+
+
+ORA.i = function(regulator, output_globregincond, reference, annotation, p.adjust.method, annotDescr,alpha){
+  
+  test = unique(as.character(output_globregincond$RegulationInCondition[which(output_globregincond$RegulationInCondition[,"regulator"] == regulator),"gene"]))
+  notTest = setdiff(reference, test)
+  resuRegu = ReguEnrich1regu(test, notTest, annotation, p.adjust.method = p.adjust.method)
+  resuRegu = resuRegu[which(resuRegu$adjPval < alpha),]
+  if (nrow(resuRegu) > 0) {
+    resuRegu = data.frame("regulator" = regulator, "termDescr" = annotDescr[resuRegu[,1],2],
+                          resuRegu, stringsAsFactors = FALSE)
+  } else {
+    
+    resuRegu = NULL
+  }
+  
+  return(resuRegu)
+  
 }
 
 library(clusterProfiler)
