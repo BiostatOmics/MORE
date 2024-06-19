@@ -1850,18 +1850,22 @@ globalreg_plot<-function(output_regincond, by_network=FALSE){
 #' @param cytoscape TRUE for plotting the network in Cytoscape. FALSE to plot the network in R. 
 #' @param group1 Name of the group to take as reference in the differential network creation. It also can be used for creating networks of a specific group.
 #' @param group2 Name of the group to compare to the reference in the differential network creation. 
+#' @param pc Percentile to consider to plot the most affecting regulators into the target omic. It must be a value comprissed between 0 and 1. Default 0.
 #' @param save If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.
 #' @return Plot of the network induced from more.
 #' @export
 
 
-
-network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group2 = NULL, save=FALSE) {
+network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group2 = NULL, pc = 0 ,save=FALSE) {
   
-  create_graph <- function(df) {
+  create_graph <- function(df,pc) {
     
     #Remove rows with 0 coef
     df = df[df[,4] != 0, ]
+    
+    #Select regulations with effects on response in the selected percentile
+    qc = quantile(abs(df[,4]),pc)[[1]]
+    df = df[which(abs(df[,4])>qc),,drop=FALSE]
     
     #Data.frame of that network
     nodes = data.frame(id = c(unique(df[,'gene']),unique(df[,'regulator'])),
@@ -1869,7 +1873,7 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
     
     #Save only four digits as it cannot be loaded greater in Cytoscape
     interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
-                              coef = round(df[,4],digits = 4), sign = ifelse(df[,4]>0,'1','-1'))
+                              coef = round(df[,4],digits = 5), sign = ifelse(df[,4]>0,'p','n'))
     
     ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
     
@@ -1900,13 +1904,29 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       nshaps[i]<-'RECTANGLE'
     }
     RCy3::setNodeShapeMapping('omic', table.column.values = omic_c, shapes = nshaps )
-    
-    coefs = igraph::edge.attributes(mygraph)$coef
-    RCy3::setEdgeColorMapping('sign', c('-1','1'), c('#FF3333','#5577FF'),mapping.type='d')
-    
+    RCy3::setEdgeColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d')
     if(diff){
-      RCy3::setEdgeLineStyleMapping('line',c('s','z','d'),c('SOLID','ZIGZAG','DOT'))
-    }
+      RCy3::setEdgeLineStyleMapping('line',c('s','e','d','v','p'),c('SOLID','EQUAL_DASH','DOT','VERTICAL_SLASH','PARALLEL_LINES'))
+    } 
+  }
+  
+  DifLineType <- function(df) {
+    df[, 7:8] <- NA
+    
+    # Assign column 8 based on the sign of Group2
+    df[, 8] <- ifelse(sign(df[, 5]) == -1, 'n', 'p')
+    
+    # Assign line type
+    df[, 7] <- ifelse(df[, 4] == 0, 'v', 
+                      ifelse(df[, 5] == 0, 'd', 
+                             ifelse(sign(df[, 4]) == sign(df[, 5]), 
+                                    ifelse(abs(df[, 4]) > abs(df[, 5]), 'e', 's'), 
+                                    'p')))
+    
+    # Assign column 8 based on the sign of Reference if Group2 = 0
+    df[df[, 5] == 0, 8] <- ifelse(sign(df[df[, 5] == 0, 4]) == -1, 'n', 'p')
+    
+    return(df)
   }
   
   if (cytoscape) {
@@ -1919,7 +1939,7 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
         
         df = output_regpcond[, c(1, 2, 3, ngroups[i])]
         
-        ig = create_graph(df)
+        ig = create_graph(df,pc)
         if(i == 1){
           create_network(ig, colnames(output_regpcond)[ngroups[i]],diff = FALSE)
         }  else{
@@ -1931,7 +1951,7 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
     } else if (is.null(group2)){
       ngroup <- grep(group1, colnames(output_regpcond))
       df = output_regpcond[, c(1, 2, 3, ngroup)]
-      ig = create_graph(df)
+      ig = create_graph(df,pc)
       create_network(ig, colnames(output_regpcond)[ngroup],diff = FALSE)
     } else {
       #Look for the groups to consider
@@ -1940,19 +1960,22 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       
       if (length(gr1) != 1 || length(gr2) != 1 || gr1 == gr2){stop("ERROR: group1 and group2 should be different names of groups to compare")}
       #Create the differential coefficient and the indicator of sign change
-      df <- output_regpcond[, c(1,2,3,gr2,gr1)]
-      df[, 6] = df[, 4] - df[, 5]
+      df <- output_regpcond[, c(1,2,3,gr1,gr2)]
+      df[, 6] = df[, 5] - df[, 4]
       #Remove rows with same effect
       df = df[df[,6] != 0, ]
-      df[, 7] = ifelse(df[,4]==0 | df[,5]==0,'z', ifelse(sign(df[, 4]) != sign(df[, 5]), 'd', 's'))
+      #Select regulations with effects on response in the selected percentile
+      qc = quantile(abs(df[,6]),pc)[[1]]
+      df = df[which(abs(df[,6])>qc),,drop=FALSE]
+      #Add the line type and sign
+      df = DifLineType(df)
       
       #Data.frame of that network
       nodes = data.frame(id = c(unique(df[,'gene']),unique(df[,'regulator'])),
                          omic = c(rep('gene',length(unique(df[,'gene']))),unique(df[,c('regulator','omic')])[,2]))
       
       interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
-                                coef = round(df[,6],digits = 4), sign = ifelse(df[,5]>0,'1','-1'),
-                                line = df[,7])
+                                sign = df[,8], line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
       
@@ -1968,14 +1991,14 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       for (i in 1:length(ngroups)) {
         #Data.frame of that network
         df = output_regpcond[, c(1, 2, 3, ngroups[i])]
-        ig = create_graph(df)
+        ig = create_graph(df,pc)
         
         if(save){
           igraph::write_graph(ig, format = 'gml', file = paste0(colnames(output_regpcond)[ngroups[i]], '.gml'))
         } else{
           igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
                               vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
-                              edge.color = ifelse(igraph::edge_attr(ig)$sign == '1', 'blue','red'))
+                              edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'))
         }
         
       }
@@ -1983,13 +2006,13 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
     } else if(is.null(group2)){
       ngroup <- grep(group1, colnames(output_regpcond))
       df = output_regpcond[, c(1, 2, 3, ngroup)]
-      ig = create_graph(df)
+      ig = create_graph(df,pc)
       if(save){
         igraph::write_graph(ig, format = 'gml', file = paste0(colnames(output_regpcond)[ngroup], '.gml'))
       } else{
         igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
-                            edge.color = ifelse(igraph::edge_attr(ig)$sign == '1', 'blue','red'))
+                            edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'))
       }
       
     } else {
@@ -2002,15 +2025,18 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       df[, 6] = df[, 4] - df[, 5]
       #Remove rows with same effect
       df = df[df[,6] != 0, ]
-      df[, 7] = ifelse(df[,4]==0 | df[,5]==0,'z', ifelse(sign(df[, 4]) != sign(df[, 5]), 'd', 's'))
+      #Select regulations with effects on response in the selected percentile
+      qc = quantile(abs(df[,6]),pc)[[1]]
+      df = df[which(abs(df[,6])>qc),,drop=FALSE]
+      #Add the line type and sign
+      df = DifLineType(df)
       
       #Data.frame of that network
       nodes = data.frame(id = c(unique(df[,'gene']),unique(df[,'regulator'])),
                          omic = c(rep('gene',length(unique(df[,'gene']))),unique(df[,c('regulator','omic')])[,2]))
       
       interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
-                                coef = round(df[,6],digits = 4), sign = ifelse(df[,5]>0,'1','-1'),
-                                line = df[,7])
+                                sign = df[,8], line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
       
@@ -2019,7 +2045,7 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       } else{
         igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
-                            edge.color = ifelse(igraph::edge_attr(ig)$sign == '1', 'blue','red'),
+                            edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'),
                             edge.lty = ifelse(igraph::edge_attr(ig)$line=='s','solid','dashed'))
       }
     }
