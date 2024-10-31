@@ -9,7 +9,7 @@
 \arguments{
 \item{object}{MORE object obtained from applying \link{more} function.}
 
-\item{plot.more}{If TRUE top 10 global regulators are plotted against the genes they regulate. By default, FALSE.}
+\item{plot.more}{If TRUE top 10 global regulators are plotted against the target features they regulate. By default, FALSE.}
 }
 \value{
 Summary of more analysis.

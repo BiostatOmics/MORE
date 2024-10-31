@@ -4,15 +4,15 @@
 \alias{RegulationInCondition}
 \title{RegulationInCondition}
 \usage{
-RegulationInCondition(output_regpcond, cond)
+RegulationInCondition(outputRegpcond, cond)
 }
 \arguments{
-\item{output_regpcond}{Output object of \link{RegulationPerCondition} function output.}
+\item{outputRegpcond}{Output object of \link{RegulationPerCondition} function output.}
 
 \item{cond}{Biological condition from which the user wants to summarize the information.}
 }
 \value{
-List with the hub genes, global regulators and the regulators with their coefficients specific to the requested condition.
+List with the hub target features, global regulators and the regulators with their coefficients specific to the requested condition.
 }
 \description{
 \code{RegulationInCondition} Function to be applied to \link{RegulationPerCondition} function output.

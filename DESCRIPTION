@@ -1,16 +1,16 @@
 Package: MORE
 Type: Package
 Title: Multi-Omics REgulation (MORE)
-Version: 0.1.0
+Version: 1.0.0
 Author: Maider Aguerralde Martin, Blanca Tomás Riquelme, Sonia Tarazona
-Description: MORE is a method which facilitate the task of applying regression models to multi-omic data. The goal of MORE is to model gene expression as a function of experimental variables, such as treatment, and the potential regulators of a given gene. MORE has a several functionalities to filter regulators: variable selection (Lasso, ridge regression and ElasticNet), filter for regulators with low variation, for missing data and for correlated regulators.
+Description: MORE is a method which facilitate the task of applying regression models to multi-omic data. The goal of MORE is to model a target omic expression as a function of experimental variables, such as treatment, and the potential regulators of a given target feature (e.g. a gene). MORE has several functionalities to filter regulators: with low variation, missing data and correlated regulators. It also applies advanced variable selection techniques such as ElasticNet, Iterative Sparse Group Lasso or Jack-knife or permutation resampling techniques depending on the type of model to apply (MLR or PLS).
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
 biocViews: Software
-Imports: igraph (>= 2.0.1), MASS, glmnet, car, psych, ltm, stringr, ropls, ggplot2, RCy3, clusterProfiler, sglfast, furrr
+Imports: igraph (>= 2.0.1), MASS, glmnet, car, psych, ltm, ropls, ggplot2, RCy3, clusterProfiler, sglfast, furrr
 Remotes: cytoscape/RCy3, jlaria/sglfast
 Maintainer: Maider Aguerralde Martin <magumar2@posgrado.upv.es>
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
 Depends: 
     R (>= 2.10)

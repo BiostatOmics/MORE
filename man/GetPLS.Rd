@@ -2,108 +2,110 @@
 % Please edit documentation in R/MORE_PLS.R
 \name{GetPLS}
 \alias{GetPLS}
-\title{\code{GetPLS} fits a PLS model for all the genes in the data set to identify
-the experimental variables and potential regulators that show a significant effect on
-the expression of each gene.}
+\title{\code{GetPLS} fits a PLS model for all the features in the target omic dataset to identify
+the conditions and potential regulators that show a significant effect on
+the expression of each target omic feature.}
 \usage{
 GetPLS(
-  GeneExpression,
-  data.omics,
+  targetData,
+  regulatoryData,
   associations = NULL,
-  omic.type = 0,
-  edesign = NULL,
+  omicType = 0,
+  condition = NULL,
   clinic = NULL,
-  clinic.type = NULL,
-  center = TRUE,
-  scale = TRUE,
-  epsilon = 1e-05,
+  clinicType = NULL,
   alfa = 0.05,
-  interactions.reg = TRUE,
-  min.variation = 0,
-  scaletype = "auto",
-  p.method = "jack",
+  interactions = TRUE,
+  minVariation = 0,
+  percNA = 0.2,
+  scaleType = "auto",
+  varSel = "Jack",
   vip = 0.8,
-  method = "pls1",
+  method = "PLS1",
   parallel = FALSE
 )
 }
 \arguments{
-\item{GeneExpression}{Data frame containing gene expression data with genes in rows and
-experimental samples in columns. Row names must be the gene IDs.}
+\item{targetData}{Data frame containing data from a target omic with its features in rows and
+samples (in different conditions) in columns. Row names must be the target omic features IDs; e.g. when Gene Expression is considered gene IDs.}
 
-\item{data.omics}{List where each element corresponds to a different omic data type to be considered (miRNAs,
+\item{regulatoryData}{List where each element corresponds to a different omic data type to be considered (miRNAs,
 transcription factors, methylation, etc.). The names of the list will represent the omics, and each element in 
 the list should be a data matrix with omic regulators in rows and samples in columns.}
 
 \item{associations}{List where each element corresponds to a different omic data type (miRNAs,
 transcription factors, methylation, etc.). The names of the list will represent the omics. Each element in 
-the list should be a data frame with 2 columns (optionally 3), describing the potential interactions between genes
-and regulators for that omic. First column must contain the genes (or features in
-GeneExpression object), second column must contain the regulators, and an optional third column can
+the list should be a data frame with 2 columns (optionally 3), describing the potential interactions between target omic features
+and regulators for that omic. First column must contain the target omic features (the ones of 
+\code{\link{targetData}} object), second column must contain the regulators, and an optional third column can
 be added to describe the type of interaction (e.g., for methylation, if a CpG site is located in
 the promoter region of the gene, in the first exon, etc.). If the user lacks prior knowledge of the potential regulators, they can set the parameter to NULL. 
-In this case, all regulators in \code{\link{data.omics}} will be treated as potential regulators for all genes. In this case, for computational efficiency, it is recommended to use pls2 \code{\link{method}}.
+In this case, all regulators in \code{\link{regulatoryData}} will be treated as potential regulators for all target omic features. In this case, for computational efficiency, it is recommended to use PLS2 \code{\link{method}}.
 Additionally, if the users have prior knowledge for certain omics and want to set other omics to NULL, they can do so.}
 
-\item{edesign}{Data frame describing the experimental design. Rows must be the samples (columns
-in \code{\link{GeneExpression}}) and columns must be the experimental variables to be included in the model (e.g. treatment, etc.).}
-
-\item{clinic}{Data.frame with all clinical variables to consider,with samples in rows and variables in columns.}
-
-\item{clinic.type}{Vector which indicates the type of data of variables introduced in \code{\link{clinic}}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
+\item{omicType}{Vector which indicates the type of data of omics introduced in \code{\link{regulatoryData}}. The user should code as 0 numeric omics and as 1 categorical or binary omics. 
 By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.}
 
-\item{center}{By default TRUE. It determines whether centering is applied to \code{\link{data.omics}}.}
+\item{condition}{Data frame describing the condition or phenotype to which considered samples belong. Rows must be the samples (columns
+in \code{\link{targetData}}) and columns must be the conditions or phenotypes to be included in the model (e.g., treatment, etc.).}
 
-\item{scale}{By default TRUE. It determines whether scaling is applied to \code{\link{data.omics}}.}
+\item{clinic}{Data frame with all clinical variables to consider, with samples in rows and variables in columns.}
 
-\item{epsilon}{Convergence threshold for coordinate descent algorithm in elasticnet. Default value, 1e-5.}
+\item{clinicType}{Vector which indicates the type of data of variables introduced in \code{\link{clinic}}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
+By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.}
 
-\item{alfa}{Significance level for variable selection in pls1and pls2 \code{\link{method}}. By default, 0.05.}
+\item{alfa}{Significance level for variable selection in PLS1 and PLS2 \code{\link{method}}. By default, 0.05.}
 
-\item{interactions.reg}{If TRUE, the model includes interactions between regulators and experimental variables. By default, TRUE.}
+\item{interactions}{If TRUE, the model includes interactions between regulators and condition variables. By default, TRUE.}
 
-\item{min.variation}{For numerical regulators, it specifies the minimum change required across conditions to retain the regulator in 
+\item{minVariation}{For numerical regulators, it specifies the minimum change required across conditions to retain the regulator in 
 the regression models. In the case of binary regulators, if the proportion of the most common value is equal to or inferior this value, 
 the regulator is considered to have low variation and will be excluded from the regression models. The user has the option to set a single 
 value to apply the same filter to all omics, provide a vector of the same length as omics if they want to specify different levels for each omics, 
 or use 'NA' when they want to apply a minimum variation filter but are uncertain about the threshold. By default, 0.}
 
-\item{scaletype}{Type of scaling to be applied. Three options:
+\item{percNA}{Maximum percentage of missing values present in regulatoryData regulators and observations to use them to construct the models.}
+
+\item{scaleType}{Type of scaling to be applied. Four options:
 \itemize{
-\item auto : Applies the autoscaling. 
-\item pareto : Applies the pareto scaling. \deqn{\frac{X_k}{s_k \sqrt[4]{m_b}} }
-\item block : Applies the block scaling. \deqn{ \frac{X_k}{s_k \sqrt{m_b}} }
+\item auto : Applies the auto scaling. 
+\item softBlock : Applies the pareto scaling. \deqn{\frac{X_k}{s_k \sqrt[4]{m_b}} }
+\item hardBlock : Applies the block scaling. \deqn{ \frac{X_k}{s_k \sqrt{m_b}} }
+\item none : It does not apply any type of scaling. Not recommended if the user does not apply their own scaling.
 }
 considering m_b the number of variables of the block. By default, auto.}
 
-\item{p.method}{Type of resampling method to apply for the p-value calculation when pls1 or pls2 \code{\link{method}}. Two options:
+\item{varSel}{Type of variable selection method to apply, different options depending on MLR or PLS usage. Four options:
 \itemize{
-\item jack : Applies Jack-Knife resampling technique.
-\item perm : Applies a resampling technique in which the response variable is permuted 100 times to obtain the distribution of the coefficients and compute then their associated p-value.
+\item EN : Applies a Multiple Linear Regression (MLR) with ElasticNet regularization.
+\item ISGL : Applies a Multiple Linear Regression (MLR) with Iterative Sparse Group Lasso (ISGL) regularization.
+\item Jack : Applies Jack-Knife resampling technique for the calculation of the significance of the coefficients in Partial Least Squares (PLS) models.
+\item Perm : Applies a resampling technique for the calculation of the significance of the coefficients in Partial Least Squares (PLS) models in which the response variable is permuted 100 times to obtain the distribution of the coefficients and compute then their associated p-value.
 }
-#' By default, jack.}
+By default, Jack.}
 
-\item{vip}{Value of VIP above which a variable can be considered significant in addition to the computed p-value in \code{\link{p.method}}. By default, 0.8.}
+\item{vip}{Value of VIP above which a variable can be considered significant in addition to the computed p-value in \code{\link{varSel}}. By default, 0.8.}
 
 \item{method}{Model to be fitted. Two options:
 \itemize{
-\item pls1 : Applies a Partial Least Squares (PLS) model, one for each of the genes at \code{\link{GeneExpression}}.
-\item pls2 : Applies a PLS model to all genes at the same time, only possible when \code{\link{associations}}= NULL.
+\item PLS1 : Applies a Partial Least Squares (PLS) model, one for each of the features in the target omic of \code{\link{targetData}}.
+\item PLS2 : Applies a PLS model to all features of the target omic simultaneously, only possible when \code{\link{associations}}= NULL.
 }
-#' By default, pls1.}
+By default, PLS1.}
+
+\item{parallel}{If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter. Parallelization is only implemented for MLR with EN variable selection and PLS methods.}
 }
 \value{
 List containing the following elements:
 \itemize{
-\item ResultsPerGene : List with as many elements as genes in \code{\link{GeneExpression}}. For each gene, it includes information about gene values, considered variables, estimated coefficients,
-                   detailed information about all regulators, and regulators identified as relevant (in glm scenario) or significant (in pls scenarios).
-\item GlobalSummary : List with information about the fitted models, including model metrics, information about regulators, genes without models, regulators, master regulators and hub genes.
+\item ResultsPerTargetF : List with as many elements as features of the target omic in \code{\link{targetData}}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
+                   detailed information about all regulators, and regulators identified as relevant (in MLR scenario) or significant (in PLS scenarios).
+\item GlobalSummary : List with information about the fitted models, including model metrics, information about regulators, features of the target omic without models, regulators, master regulators and hub target features.
 \item Arguments : List containing all the arguments used to generate the models.                
 }
 }
 \description{
-\code{GetPLS} fits a PLS model for all the genes in the data set to identify
-the experimental variables and potential regulators that show a significant effect on
-the expression of each gene.
+\code{GetPLS} fits a PLS model for all the features in the target omic dataset to identify
+the conditions and potential regulators that show a significant effect on
+the expression of each target omic feature.
 }
