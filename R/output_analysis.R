@@ -6,37 +6,37 @@
 ## By Sonia, Monica, Maider
 ## 12-March-2024
 
-# Function to obtain all significant pairs gene-regulator per omic --------
+# Function to obtain all significant pairs targetF-regulator per omic --------
 
-# For only 1 gene
-GetPairs1GeneAllReg = function (gene, output) {
+# For only 1 targetF
+GetPairs1targetFAllReg = function (targetF, output) {
   
-  if(output$arguments$method=='glm'|| output$arguments$method=='isgl'){
+  if(output$arguments$method=='MLR'|| output$arguments$method=='ISGL'){
     
-    reguSignif = output$ResultsPerGene[[gene]]$relevantRegulators
+    reguSignif = output$ResultsPerTargetF[[targetF]]$relevantRegulators
     
     if (is.null(reguSignif)) {  # NO significant regulators
       return (NULL)
       
     } else {  # Significant regulators
       
-      reguSignif = output$ResultsPerGene[[gene]]$allRegulators[reguSignif,]
-      reguSignif = reguSignif[,c("gene", "regulator", "omic", "area", "filter")]
+      reguSignif = output$ResultsPerTargetF[[targetF]]$allRegulators[reguSignif,]
+      reguSignif = reguSignif[,c("targetF", "regulator", "omic", "area", "filter")]
       return (reguSignif)
     }
     
   }
-  if(output$arguments$method=='pls1' || output$arguments$method=='pls2'){
+  if(output$arguments$method=='PLS1' || output$arguments$method=='PLS2'){
     
-    reguSignif = output$ResultsPerGene[[gene]]$significantRegulators
+    reguSignif = output$ResultsPerTargetF[[targetF]]$significantRegulators
     
     if (is.null(reguSignif)) {  # NO significant regulators
       return (NULL)
       
     } else {  # Significant regulators
       
-      reguSignif = output$ResultsPerGene[[gene]]$allRegulators[reguSignif,]
-      reguSignif = reguSignif[,c("gene", "regulator", "omic", "area", "filter")]
+      reguSignif = output$ResultsPerTargetF[[targetF]]$allRegulators[reguSignif,]
+      reguSignif = reguSignif[,c("targetF", "regulator", "omic", "area", "filter")]
       return (reguSignif)
     }
     
@@ -45,14 +45,25 @@ GetPairs1GeneAllReg = function (gene, output) {
 }
 
 
-# For all genes
-GetPairsGeneRegulator = function (genes = NULL, output) {
+# For all targetFs
+GetPairstargetFRegulator = function (targetFs = NULL, output) {
   
-  if (is.null(genes)) genes = rownames(output$GlobalSummary$ReguPerGene)
+  if (is.null(targetFs)) targetFs = rownames(output$GlobalSummary$ReguPerTargetF)
   
-  myresults = do.call("rbind", lapply(genes, GetPairs1GeneAllReg, output))
+  myresults = do.call("rbind", lapply(targetFs, GetPairs1targetFAllReg, output))
   
-  #   colnames(myresults) = c("gene", "regulator", "omic", "area")
+  #   colnames(myresults) = c("targetF", "regulator", "omic", "area")
+  return(myresults)
+}
+
+#Make the coefficients comparable
+
+ComparableBetas = function(myresults, output){
+  
+  for(k in unique(myresults[,'targetF'])){
+    sd_targetF = sd(output$arguments$targetData[k,])
+    myresults[myresults[,"targetF"] == k, grep('Group',colnames(myresults)) ] = myresults[myresults[,"targetF"] == k, grep('Group',colnames(myresults)) ]/sd_targetF
+  }
   return(myresults)
 }
 
@@ -62,23 +73,23 @@ GetPairsGeneRegulator = function (genes = NULL, output) {
 #' 
 #' @param output Output object of MORE main function.
 #' 
-#' @return Summary table containing all the relevant/significant regulators. Moreover, it provides the regression coefficient that relates the gene and the regulator for each experimental condition after testing if this coefficient is relevant/significant or not.
+#' @return Summary table containing all the relevant/significant regulators. Moreover, it provides the regression coefficient that relates the targetF and the regulator for each experimental condition after testing if this coefficient is relevant/significant or not.
 #'
 #' @export
 
 
 RegulationPerCondition = function(output){
-  # output: results of the getGLM/getPLS function.
+  # output: results of the getMLR/getPLS function.
   method = output$arguments$method
   #Add a progressbar
-  pb <- txtProgressBar(min = 0, max = length(rownames(output$GlobalSummary$ReguPerGene)), style = 3)
-  if(method =='glm'|| method=='isgl'){
+  pb <- txtProgressBar(min = 0, max = length(rownames(output$GlobalSummary$ReguPerTargetF)), style = 3)
+  if(method =='MLR'|| method=='ISGL'){
     design = output$arguments$finaldesign
     Group = output$arguments$groups
     
     # Creo a partir de la funcion que ya estaba hecha (linea 1657) la tabla y le anyado los huecos en blanco y cambio el nombre a "representative".
-    genes = rownames(output$GlobalSummary$ReguPerGene)
-    myresults = do.call("rbind", lapply(genes, GetPairs1GeneAllReg, output))
+    targetFs = rownames(output$GlobalSummary$ReguPerTargetF)
+    myresults = do.call("rbind", lapply(targetFs, GetPairs1targetFAllReg, output))
     colnames(myresults) = c(colnames(myresults)[1:4], "representative")
     myresults[myresults[, "representative"] == "Model", "representative"] = ""
     if (is.null(design)){
@@ -90,47 +101,47 @@ RegulationPerCondition = function(output){
       myresults = cbind(myresults, coeffs)
       myresults[grep("_N", myresults[, "representative"]), "coefficients"] = -1  # Para cambiar el signo si pertenece al grupo de correlacionados negativamente
       
-      for(k in unique(myresults[,"gene"])){
-        setTxtProgressBar(pb, value = which(names(output$ResultsPerGene)==k))
+      for(k in unique(myresults[,"targetF"])){
+        setTxtProgressBar(pb, value = which(names(output$ResultsPerTargetF)==k))
         # Posicion y reguladores que son representantes.
-        counts = grep("_R", myresults[myresults[,"gene"] == k, "representative"]) # positions of representatives of mc
-        representatives = myresults[myresults[,"gene"] == k, "regulator"][counts]      # Devuelve el nombre real de los reguladores representantes
-        omic.representative = myresults[myresults[,"gene"] == k, c("regulator", "representative")][counts,]   # Columna Regulator y Representative
+        counts = grep("_R", myresults[myresults[,"targetF"] == k, "representative"]) # positions of representatives of mc
+        representatives = myresults[myresults[,"targetF"] == k, "regulator"][counts]      # Devuelve el nombre real de los reguladores representantes
+        omic.representative = myresults[myresults[,"targetF"] == k, c("regulator", "representative")][counts,]   # Columna Regulator y Representative
         
         # Necesito el if, si no da error. En caso de entrar, elimino las coletillas para que sea mas sencillo buscar y asignar el representante
         if(length(representatives) != 0){
-          norow.nulls = which(myresults[myresults[,"gene"] == k, "representative"] != "")
-          myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_P", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
-          myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_N", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
-          myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_R", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
+          norow.nulls = which(myresults[myresults[,"targetF"] == k, "representative"] != "")
+          myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_P", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
+          myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_N", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
+          myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_R", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
           
           for(i in 1:length(representatives)){
             # Aquellos que se llamen igual "omica_mc(numero)", se les asignara el representante
-            reg.rep = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == representatives[i], "representative"]
-            myresults[myresults[,"gene"] == k & myresults[,"representative"] == reg.rep, "representative"] = representatives[i]
+            reg.rep = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == representatives[i], "representative"]
+            myresults[myresults[,"targetF"] == k & myresults[,"representative"] == reg.rep, "representative"] = representatives[i]
           }
           
-          # Reguladores significativos del GLM. Pongo gsub() porque haciendo pruebas he visto que hay reguladores que se nombran `nombre regulador`.
+          # Reguladores significativos del MLR. Pongo gsub() porque haciendo pruebas he visto que hay reguladores que se nombran `nombre regulador`.
           # Las comitas haran que no pueda encontrar el regulador
           # en la tabla. Sin embargo, creo sign.glm para manterner las comitas y poder acceder a la tabla de coeficientes
-          significatives = gsub("`", "", names(output$ResultsPerGene[[k]]$coefficients[2:nrow(output$ResultsPerGene[[k]]$coefficients), 1]))
-          sign.glm = names(output$ResultsPerGene[[k]]$coefficients[2:nrow(output$ResultsPerGene[[k]]$coefficients), 1])
+          significatives = gsub("`", "", names(output$ResultsPerTargetF[[k]]$coefficients[2:nrow(output$ResultsPerTargetF[[k]]$coefficients), 1]))
+          sign.glm = names(output$ResultsPerTargetF[[k]]$coefficients[2:nrow(output$ResultsPerTargetF[[k]]$coefficients), 1])
           
           for(i in 1:length(significatives)){
             if(any(significatives[i] == omic.representative[,2])){
-              # index.regul: para saber que regulador es el representante y asi todos los que tengan su nombre en la columna "representative" tendran su coeficiente del modelo GLM.
+              # index.regul: para saber que regulador es el representante y asi todos los que tengan su nombre en la columna "representative" tendran su coeficiente del modelo MLR.
               index.regul = rownames(omic.representative)[which(omic.representative[,2] == significatives[i])]
-              PN = myresults[myresults[,"gene"] == k & myresults[,"representative"] == index.regul, "coefficients"]                        # Sera 1 o -1, segun tenga "_P" o "_N"
-              myresults[myresults[,"gene"] == k & myresults[,"representative"] == index.regul, "coefficients"] = PN*output$ResultsPerGene[[k]]$coefficients[sign.glm[i], 1]                                                    # Tendra signo de la tabla si es "_P" y signo opuesto si es "_N".
+              PN = myresults[myresults[,"targetF"] == k & myresults[,"representative"] == index.regul, "coefficients"]                        # Sera 1 o -1, segun tenga "_P" o "_N"
+              myresults[myresults[,"targetF"] == k & myresults[,"representative"] == index.regul, "coefficients"] = PN*output$ResultsPerTargetF[[k]]$coefficients[sign.glm[i], 1]                                                    # Tendra signo de la tabla si es "_P" y signo opuesto si es "_N".
             } else {
               # En caso de no pertenecer a un grupo de reguladores correlacionados, cogera su coeficiente de la tabla y lo asignara a la posicion correspondiente
-              myresults[myresults[,"gene"] == k & myresults[,"regulator"] == significatives[i], "coefficients"] = output$ResultsPerGene[[k]]$coefficients[sign.glm[i], 1]
+              myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == significatives[i], "coefficients"] = output$ResultsPerTargetF[[k]]$coefficients[sign.glm[i], 1]
             }
           }
           
         } else {
           # Si no presenta grupo de reguladores correlacionados, simplemente sacara los coeficientes de la tabla "coefficients"
-          myresults[myresults[,"gene"] == k, "coefficients"] = output$ResultsPerGene[[k]]$coefficients[2:nrow(output$ResultsPerGene[[k]]$coefficients), 1]
+          myresults[myresults[,"targetF"] == k, "coefficients"] = output$ResultsPerTargetF[[k]]$coefficients[2:nrow(output$ResultsPerTargetF[[k]]$coefficients), 1]
         }
       }
       
@@ -145,19 +156,19 @@ RegulationPerCondition = function(output){
       rownames(conditions) = rownames(myresults)
       myresults = cbind(myresults, conditions)
       
-      for(k in unique(myresults[,"gene"])){
-        setTxtProgressBar(pb, value = which(names(output$ResultsPerGene)==k))
-        significant.regulators = output$ResultsPerGene[[k]]$relevantRegulators                    # Reguladores significativos.
-        if(method =='glm'){
-          model.variables = gsub("`", "", rownames(output$ResultsPerGene[[k]]$coefficients))[-1]       # Reguladores e interacciones en el modelo.
+      for(k in unique(myresults[,"targetF"])){
+        setTxtProgressBar(pb, value = which(names(output$ResultsPerTargetF)==k))
+        significant.regulators = output$ResultsPerTargetF[[k]]$relevantRegulators                    # Reguladores significativos.
+        if(method =='MLR'){
+          model.variables = gsub("`", "", rownames(output$ResultsPerTargetF[[k]]$coefficients))[-1]       # Reguladores e interacciones en el modelo.
           kc = 2
         } else{
-          model.variables = gsub("`", "", rownames(output$ResultsPerGene[[k]]$coefficients))       # Reguladores e interacciones en el modelo.
+          model.variables = gsub("`", "", rownames(output$ResultsPerTargetF[[k]]$coefficients))       # Reguladores e interacciones en el modelo.
           kc = 1
         }
         
         # Cojo las interacciones y creo objetos que contengan los reguladores que aparecen con interaccion, solas o ambas.
-        interactions.model = gsub("`", "", rownames(output$ResultsPerGene[[k]]$coefficients)[grep(":", rownames(output$ResultsPerGene[[k]]$coefficients))])
+        interactions.model = gsub("`", "", rownames(output$ResultsPerTargetF[[k]]$coefficients)[grep(":", rownames(output$ResultsPerTargetF[[k]]$coefficients))])
         
         inter.variables = unlist(strsplit(interactions.model, ":", fixed = TRUE))
         if(is.null(inter.variables)){
@@ -174,48 +185,48 @@ RegulationPerCondition = function(output){
         variables.inter.only = intersect(inter.variables, model.variables)                                  # Reguladores con interaccion y solas.
         variables.inter = setdiff(inter.variables, model.variables)                                         # Reguladores con solo interaccion (no aparecen solas en el modelo).
         
-        for(j in kc:nrow(output$ResultsPerGene[[k]]$coefficients)){
-          regul = unlist(strsplit(gsub("`", "", rownames(output$ResultsPerGene[[k]]$coefficients)[j]), ":"))
+        for(j in kc:nrow(output$ResultsPerTargetF[[k]]$coefficients)){
+          regul = unlist(strsplit(gsub("`", "", rownames(output$ResultsPerTargetF[[k]]$coefficients)[j]), ":"))
           
           # Evaluo en que conjunto se encuentra el regulador correspondiente y segun eso asigno el coeficiente o sumo el nuevo coeficiente a lo que ya habia en esa posicion.
           if(any(regul %in% variables.only)){
             if(any(regul %in% significant.regulators)){
-              myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul, c(names.groups)] = output$ResultsPerGene[[k]]$coefficients[j,]
+              myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul, c(names.groups)] = output$ResultsPerTargetF[[k]]$coefficients[j,]
             } else {
-              myresults[myresults[,"gene"] == k & myresults[,"representative"] == regul, c(names.groups)] = output$ResultsPerGene[[k]]$coefficients[j,]
+              myresults[myresults[,"targetF"] == k & myresults[,"representative"] == regul, c(names.groups)] = output$ResultsPerTargetF[[k]]$coefficients[j,]
             }
           }
           
           if(any(regul %in% variables.inter)){
             if(any(regul %in% significant.regulators)){
-              myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul[2], regul[1]] = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul[2], regul[1]] + output$ResultsPerGene[[k]]$coefficients[j,]
+              myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul[2], regul[1]] = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul[2], regul[1]] + output$ResultsPerTargetF[[k]]$coefficients[j,]
             } else {
-              myresults[myresults[,"gene"] == k & myresults[,"representative"] == regul[2], regul[1]] = myresults[myresults[,"gene"] == k & myresults[,"representative"] == regul[2], regul[1]] + output$ResultsPerGene[[k]]$coefficients[j,]
+              myresults[myresults[,"targetF"] == k & myresults[,"representative"] == regul[2], regul[1]] = myresults[myresults[,"targetF"] == k & myresults[,"representative"] == regul[2], regul[1]] + output$ResultsPerTargetF[[k]]$coefficients[j,]
             }
           }
           
           if(any(regul %in% variables.inter.only)){
             if(any(regul %in% significant.regulators)){
               if(length(regul) == 1){
-                myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul, c(names.groups)] = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul, c(names.groups)] + output$ResultsPerGene[[k]]$coefficients[j,]
+                myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul, c(names.groups)] = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul, c(names.groups)] + output$ResultsPerTargetF[[k]]$coefficients[j,]
               } else {
-                myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul[2], regul[1]] = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul[2], regul[1]] + output$ResultsPerGene[[k]]$coefficients[j,]
+                myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul[2], regul[1]] = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul[2], regul[1]] + output$ResultsPerTargetF[[k]]$coefficients[j,]
               }
             } else {
               if(length(regul) == 1){
-                myresults[myresults[,"gene"] == k & myresults[,"representative"] == regul, c(names.groups)] = myresults[myresults[,"gene"] == k & myresults[,"representative"] == regul, c(names.groups)] + output$ResultsPerGene[[k]]$coefficients[j,]
+                myresults[myresults[,"targetF"] == k & myresults[,"representative"] == regul, c(names.groups)] = myresults[myresults[,"targetF"] == k & myresults[,"representative"] == regul, c(names.groups)] + output$ResultsPerTargetF[[k]]$coefficients[j,]
               } else {
-                myresults[myresults[,"gene"] == k & myresults[,"representative"] == regul[2], regul[1]] = myresults[myresults[,"gene"] == k & myresults[,"representative"] == regul[2], regul[1]] + output$ResultsPerGene[[k]]$coefficients[j,]
+                myresults[myresults[,"targetF"] == k & myresults[,"representative"] == regul[2], regul[1]] = myresults[myresults[,"targetF"] == k & myresults[,"representative"] == regul[2], regul[1]] + output$ResultsPerTargetF[[k]]$coefficients[j,]
               }
             }
           }
         }
         
         # Veo si hay representantes, en caso de haberlos asignara la misma fila del representante a los reguladores que acaben en "_P" y el opuesto a los que acaban en "_N".
-        countsR = grep("_R", myresults[myresults[,"gene"] == k, "representative"])
+        countsR = grep("_R", myresults[myresults[,"targetF"] == k, "representative"])
         
         if(length(countsR) != 0){
-          countsR = myresults[myresults[,"gene"] == k, 5:ncol(myresults)][countsR,]
+          countsR = myresults[myresults[,"targetF"] == k, 5:ncol(myresults)][countsR,]
           
           # Para los correlacionados positivamente: mete la misma fila de coeficientes del representante.
           countsP = countsR
@@ -223,7 +234,7 @@ RegulationPerCondition = function(output){
           countsP[,"representative"] = paste(countsP[,"representative"], "_P", sep = "")
           
           for(l in 1:nrow(countsP)){
-            myresults[myresults[,"gene"] == k & myresults[,"representative"] == countsP[l,"representative"], 6:ncol(myresults)] = countsP[l,2:ncol(countsP)]
+            myresults[myresults[,"targetF"] == k & myresults[,"representative"] == countsP[l,"representative"], 6:ncol(myresults)] = countsP[l,2:ncol(countsP)]
           }
           
           # Para los correlacionados negativamente: mete la fila opuesta de coeficientes del representante.
@@ -232,39 +243,40 @@ RegulationPerCondition = function(output){
           countsN[,"representative"] = paste(countsN[,"representative"], "_N", sep = "")
           
           for(l in 1:nrow(countsN)){
-            myresults[myresults[,"gene"] == k & myresults[,"representative"] == countsN[l,"representative"], 6:ncol(myresults)] = -countsN[l,2:ncol(countsN)]
+            myresults[myresults[,"targetF"] == k & myresults[,"representative"] == countsN[l,"representative"], 6:ncol(myresults)] = -countsN[l,2:ncol(countsN)]
           }
           
-          counts = grep("_R", myresults[myresults[,"gene"] == k, "representative"])
-          representatives = myresults[myresults[,"gene"] == k, "regulator"][counts]                                    # Devuelve el nombre real de los reguladores representantes
-          omic.representative = myresults[myresults[,"gene"] == k, c("regulator", "representative")][counts,]          # Columna Regulator y Representative
+          counts = grep("_R", myresults[myresults[,"targetF"] == k, "representative"])
+          representatives = myresults[myresults[,"targetF"] == k, "regulator"][counts]                                    # Devuelve el nombre real de los reguladores representantes
+          omic.representative = myresults[myresults[,"targetF"] == k, c("regulator", "representative")][counts,]          # Columna Regulator y Representative
           
           # Necesito el if, sino da error. En caso de entrar, elimino las coletillas para que sea mas sencillo buscar y asignar el representante.
           if(length(representatives) != 0){
-            norow.nulls = which(myresults[myresults[,"gene"] == k, "representative"] != "")
-            myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_P", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
-            myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_N", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
-            myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_R", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
+            norow.nulls = which(myresults[myresults[,"targetF"] == k, "representative"] != "")
+            myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_P", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
+            myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_N", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
+            myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_R", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
             
             for(i in 1:length(representatives)){
               # Aquellos que se llamen igual "omica_mc(numero)", se les asignara el representante.
-              reg.rep = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == representatives[i], "representative"]
-              myresults[myresults[,"gene"] == k & myresults[,"representative"] == reg.rep, "representative"] = representatives[i]
+              reg.rep = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == representatives[i], "representative"]
+              myresults[myresults[,"targetF"] == k & myresults[,"representative"] == reg.rep, "representative"] = representatives[i]
             }
           }
         }
       }
     }
+    myresults = ComparableBetas(myresults, output)
     myresults[,6:ncol(myresults)] = signif(myresults[,6:ncol(myresults)], digits = 4) # Para que no salgan los numeros en diferentes notaciones
     
   }
-  if(method=='pls1' || method=='pls2'){
+  if(method=='PLS1' || method=='PLS2'){
     design = output$arguments$finaldesign
     Group = output$arguments$groups
     
     # Creo a partir de la funcion que ya estaba hecha (linea 1657) la tabla y le anyado los huecos en blanco y cambio el nombre a "representative".
-    genes = rownames(output$GlobalSummary$ReguPerGene)
-    myresults = do.call("rbind", lapply(genes, GetPairs1GeneAllReg, output))
+    targetFs = rownames(output$GlobalSummary$ReguPerTargetF)
+    myresults = do.call("rbind", lapply(targetFs, GetPairs1targetFAllReg, output))
     colnames(myresults) = c(colnames(myresults)[1:4], "representative")
     myresults[myresults[, "representative"] == "Model", "representative"] = ""
     
@@ -277,47 +289,47 @@ RegulationPerCondition = function(output){
       myresults = cbind(myresults, coeffs)
       myresults[grep("_N", myresults[, "representative"]), "coefficients"] = -1  # Para cambiar el signo si pertenece al grupo de correlacionados negativamente
       
-      for(k in unique(myresults[,"gene"])){
-        setTxtProgressBar(pb, value = which(names(output$ResultsPerGene)==k))
+      for(k in unique(myresults[,"targetF"])){
+        setTxtProgressBar(pb, value = which(names(output$ResultsPerTargetF)==k))
         # Posicion y reguladores que son representantes.
-        counts = grep("_R", myresults[myresults[,"gene"] == k, "representative"]) # positions of representatives of mc
-        representatives = myresults[myresults[,"gene"] == k, "regulator"][counts]      # Devuelve el nombre real de los reguladores representantes
-        omic.representative = myresults[myresults[,"gene"] == k, c("regulator", "representative")][counts,]   # Columna Regulator y Representative
+        counts = grep("_R", myresults[myresults[,"targetF"] == k, "representative"]) # positions of representatives of mc
+        representatives = myresults[myresults[,"targetF"] == k, "regulator"][counts]      # Devuelve el nombre real de los reguladores representantes
+        omic.representative = myresults[myresults[,"targetF"] == k, c("regulator", "representative")][counts,]   # Columna Regulator y Representative
         
         # Necesito el if, si no da error. En caso de entrar, elimino las coletillas para que sea mas sencillo buscar y asignar el representante
         if(length(representatives) != 0){
-          norow.nulls = which(myresults[myresults[,"gene"] == k, "representative"] != "")
-          myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_P", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
-          myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_N", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
-          myresults[myresults[,"gene"] == k, "representative"][norow.nulls] = sub("_R", "", myresults[myresults[,"gene"] == k, "representative"][norow.nulls])
+          norow.nulls = which(myresults[myresults[,"targetF"] == k, "representative"] != "")
+          myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_P", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
+          myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_N", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
+          myresults[myresults[,"targetF"] == k, "representative"][norow.nulls] = sub("_R", "", myresults[myresults[,"targetF"] == k, "representative"][norow.nulls])
           
           for(i in 1:length(representatives)){
             # Aquellos que se llamen igual "omica_mc(numero)", se les asignara el representante
-            reg.rep = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == representatives[i], "representative"]
-            myresults[myresults[,"gene"] == k & myresults[,"representative"] == reg.rep, "representative"] = representatives[i]
+            reg.rep = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == representatives[i], "representative"]
+            myresults[myresults[,"targetF"] == k & myresults[,"representative"] == reg.rep, "representative"] = representatives[i]
           }
           
-          # Reguladores significativos del GLM. Pongo gsub() porque haciendo pruebas he visto que hay reguladores que se nombran `nombre regulador`.
+          # Reguladores significativos del MLR. Pongo gsub() porque haciendo pruebas he visto que hay reguladores que se nombran `nombre regulador`.
           # Las comitas haran que no pueda encontrar el regulador
           # en la tabla. Sin embargo, creo sign.glm para manterner las comitas y poder acceder a la tabla de coeficientes
-          significatives = gsub("`", "", names(output$ResultsPerGene[[k]]$coefficients[1:nrow(output$ResultsPerGene[[k]]$coefficients), 1]))
-          sign.glm = names(output$ResultsPerGene[[k]]$coefficients[1:nrow(output$ResultsPerGene[[k]]$coefficients), 1])
+          significatives = gsub("`", "", names(output$ResultsPerTargetF[[k]]$coefficients[1:nrow(output$ResultsPerTargetF[[k]]$coefficients), 1]))
+          sign.glm = names(output$ResultsPerTargetF[[k]]$coefficients[1:nrow(output$ResultsPerTargetF[[k]]$coefficients), 1])
           
           for(i in 1:length(significatives)){
             if(any(significatives[i] == omic.representative[,2])){
-              # index.regul: para saber que regulador es el representante y asi todos los que tengan su nombre en la columna "representative" tendran su coeficiente del modelo GLM.
+              # index.regul: para saber que regulador es el representante y asi todos los que tengan su nombre en la columna "representative" tendran su coeficiente del modelo MLR.
               index.regul = rownames(omic.representative)[which(omic.representative[,2] == significatives[i])]
-              PN = myresults[myresults[,"gene"] == k & myresults[,"representative"] == index.regul, "coefficients"]                        # Sera 1 o -1, segun tenga "_P" o "_N"
-              myresults[myresults[,"gene"] == k & myresults[,"representative"] == index.regul, "coefficients"] = PN*output$ResultsPerGene[[k]]$coefficients[sign.glm[i], 1]                                                    # Tendra signo de la tabla si es "_P" y signo opuesto si es "_N".
+              PN = myresults[myresults[,"targetF"] == k & myresults[,"representative"] == index.regul, "coefficients"]                        # Sera 1 o -1, segun tenga "_P" o "_N"
+              myresults[myresults[,"targetF"] == k & myresults[,"representative"] == index.regul, "coefficients"] = PN*output$ResultsPerTargetF[[k]]$coefficients[sign.glm[i], 1]                                                    # Tendra signo de la tabla si es "_P" y signo opuesto si es "_N".
             } else {
               # En caso de no pertenecer a un grupo de reguladores correlacionados, cogera su coeficiente de la tabla y lo asignara a la posicion correspondiente
-              myresults[myresults[,"gene"] == k & myresults[,"regulator"] == significatives[i], "coefficients"] = output$ResultsPerGene[[k]]$coefficients[sign.glm[i], 1]
+              myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == significatives[i], "coefficients"] = output$ResultsPerTargetF[[k]]$coefficients[sign.glm[i], 1]
             }
           }
           
         } else {
           # Si no presenta grupo de reguladores correlacionados, simplemente sacara los coeficientes de la tabla "coefficients"
-          myresults[myresults[,"gene"] == k, "coefficients"] = output$ResultsPerGene[[k]]$coefficients[1:nrow(output$ResultsPerGene[[k]]$coefficients), 1]
+          myresults[myresults[,"targetF"] == k, "coefficients"] = output$ResultsPerTargetF[[k]]$coefficients[1:nrow(output$ResultsPerTargetF[[k]]$coefficients), 1]
         }
       }
       
@@ -332,15 +344,15 @@ RegulationPerCondition = function(output){
       rownames(conditions) = rownames(myresults)
       myresults = cbind(myresults, conditions)
       
-      for(k in unique(myresults[,"gene"])){
+      for(k in unique(myresults[,"targetF"])){
         
-        setTxtProgressBar(pb, value = which(names(output$ResultsPerGene)==k))
+        setTxtProgressBar(pb, value = which(names(output$ResultsPerTargetF)==k))
 
-        significant.regulators = output$ResultsPerGene[[k]]$significantRegulators                    # Reguladores significativos.
-        model.variables = gsub("`", "", rownames(output$ResultsPerGene[[k]]$coefficients))           # Reguladores e interacciones en el modelo.
+        significant.regulators = output$ResultsPerTargetF[[k]]$significantRegulators                    # Reguladores significativos.
+        model.variables = gsub("`", "", rownames(output$ResultsPerTargetF[[k]]$coefficients))           # Reguladores e interacciones en el modelo.
         
         # Cojo las interacciones y creo objetos que contengan los reguladores que aparecen con interaccion, solas o ambas.
-        interactions.model = gsub("`", "", rownames(output$ResultsPerGene[[k]]$coefficients)[grep(":", rownames(output$ResultsPerGene[[k]]$coefficients))])
+        interactions.model = gsub("`", "", rownames(output$ResultsPerTargetF[[k]]$coefficients)[grep(":", rownames(output$ResultsPerTargetF[[k]]$coefficients))])
         
         inter.variables = unlist(strsplit(interactions.model, ":", fixed = TRUE))
         if(is.null(inter.variables)){
@@ -357,36 +369,37 @@ RegulationPerCondition = function(output){
         variables.inter.only = intersect(inter.variables, model.variables)                                  # Reguladores con interaccion y solas.
         variables.inter = setdiff(inter.variables, model.variables)                                         # Reguladores con solo interaccion (no aparecen solas en el modelo).
         
-        for(j in 1:nrow(output$ResultsPerGene[[k]]$coefficients)){
-          regul = unlist(strsplit(gsub("`", "", rownames(output$ResultsPerGene[[k]]$coefficients)[j]), ":"))
+        for(j in 1:nrow(output$ResultsPerTargetF[[k]]$coefficients)){
+          regul = unlist(strsplit(gsub("`", "", rownames(output$ResultsPerTargetF[[k]]$coefficients)[j]), ":"))
           
           groups = regul[grepl(paste(paste0('Group_',names(table(Group))),collapse='|'), regul)]
           regula = setdiff(regul,groups)
           # Evaluo en que conjunto se encuentra el regulador correspondiente y segun eso asigno el coeficiente o sumo el nuevo coeficiente a lo que ya habia en esa posicion.
           if(any(regul %in% variables.only)){
             if(any(regul %in% significant.regulators)){
-              myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul, c(names.groups)] = output$ResultsPerGene[[k]]$coefficients[j,1]
+              myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul, c(names.groups)] = output$ResultsPerTargetF[[k]]$coefficients[j,1]
             } 
           }
           #TO DO: regul[1] se supone que tendría que ser algo sobre los grupos y no un regulador
           if(any(regul %in% variables.inter)){
             if(any(regul %in% significant.regulators)){
-              myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regula, groups] = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regula, groups] + output$ResultsPerGene[[k]]$coefficients[j,1]
+              myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regula, groups] = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regula, groups] + output$ResultsPerTargetF[[k]]$coefficients[j,1]
             } 
           }
           
           if(any(regul %in% variables.inter.only)){
             if(any(regul %in% significant.regulators)){
               if(length(regul) == 1){
-                myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul, c(names.groups)] = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regul, c(names.groups)] + output$ResultsPerGene[[k]]$coefficients[j,1]
+                myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul, c(names.groups)] = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regul, c(names.groups)] + output$ResultsPerTargetF[[k]]$coefficients[j,1]
               } else {
-                myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regula, groups] = myresults[myresults[,"gene"] == k & myresults[,"regulator"] == regula, groups] + output$ResultsPerGene[[k]]$coefficients[j,1]
+                myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regula, groups] = myresults[myresults[,"targetF"] == k & myresults[,"regulator"] == regula, groups] + output$ResultsPerTargetF[[k]]$coefficients[j,1]
               }
             } 
           }
         }
       }
     }
+    myresults = ComparableBetas(myresults, output)
     myresults[,6:ncol(myresults)] = signif(myresults[,6:ncol(myresults)], digits = 4) # Para que no salgan los numeros en diferentes notaciones
     myresults = myresults[,-5,drop=FALSE]
     
@@ -400,22 +413,22 @@ RegulationPerCondition = function(output){
 #'
 #' \code{RegulationInCondition} Function to be applied to \link{RegulationPerCondition} function output.
 #' 
-#' @param output_regpcond Output object of \link{RegulationPerCondition} function output.
+#' @param outputRegpcond Output object of \link{RegulationPerCondition} function output.
 #' @param cond Biological condition from which the user wants to summarize the information.
 #' 
-#' @return List with the hub genes, global regulators and the regulators with their coefficients specific to the requested condition.
+#' @return List with the hub target features, global regulators and the regulators with their coefficients specific to the requested condition.
 #'
 #' @export
 
-RegulationInCondition <- function (output_regpcond, cond){
+RegulationInCondition <- function (outputRegpcond, cond){
   
   #Take group column in RegulationPerCondition
-  group_col<-grep(cond,colnames(output_regpcond))
-  #Use only the group in which we are interested and remove genes that do not affect that group
-  output_regpcond = output_regpcond[c(output_regpcond[,group_col]!=0),c(1,2,3,group_col)]
+  group_col<-grep(cond,colnames(outputRegpcond))
+  #Use only the group in which we are interested and remove target features that do not affect that group
+  outputRegpcond = outputRegpcond[c(outputRegpcond[,group_col]!=0),c(1,2,3,group_col)]
   
   #Calculate the global regulators
-  myreg<-table(output_regpcond[,2])
+  myreg<-table(outputRegpcond[,2])
   #Calculate third quantile
   q3<-quantile(myreg,0.75)
   if(length(myreg[myreg>q3])<10){
@@ -424,35 +437,35 @@ RegulationInCondition <- function (output_regpcond, cond){
     GlobalRegulators = intersect(names(myreg[myreg>q3]), names(myreg[myreg>10]) ) 
   }
   
-  #Calculate the hub genes
-  myhub<-table(output_regpcond[,1])
+  #Calculate the hub target features
+  myhub<-table(outputRegpcond[,1])
   #Calculate third quantile
   q3<-quantile(myhub,0.75)
   if(length(myhub[myhub>q3])<10){
-    HubGenes = names(myhub[rev(tail(order(myhub),10))])
+    HubTargetF = names(myhub[rev(tail(order(myhub),10))])
   } else{
-    HubGenes = names(myhub[myhub>q3])
+    HubTargetF = names(myhub[myhub>q3])
   }
   
-  return(list('GlobalRegulators'=GlobalRegulators, 'Hubgenes'=HubGenes, 'RegulationInCondition'=output_regpcond))
+  return(list('GlobalRegulators'=GlobalRegulators, 'HubTargetF'=HubTargetF, 'RegulationInCondition'=outputRegpcond))
   
 }
 
 
-# Plot GLM results --------------------------------------------------------
+# Plot MLR results --------------------------------------------------------
 
-# Plot 1 gene versus 1 regulator ------------------------------------------
+# Plot 1 targetF versus 1 regulator ------------------------------------------
 
-plotGeneRegu = function (x.points, geneValues, reguValues, geneErrorValues, reguErrorValues, col = c(1,2),
+plotTargetFRegu = function (x.points, targetFValues, reguValues, targetFErrorValues, reguErrorValues, col = c(1,2),
                          xlab = "", yylab = c("right", "left"), pch = c(16,17), main = "",
                          numLines = NULL, x.names = NULL, yleftlim, yrightlim) {
   
   # Adjust the axis to include the error value
   if (missing(yrightlim)) {
-    if (! missing(geneErrorValues) && ! is.null(geneErrorValues)) {
-      yrightlim = range(c(geneValues - geneErrorValues, geneValues + geneErrorValues), na.rm = TRUE)
+    if (! missing(targetFErrorValues) && ! is.null(targetFErrorValues)) {
+      yrightlim = range(c(targetFValues - targetFErrorValues, targetFValues + targetFErrorValues), na.rm = TRUE)
     } else {
-      yrightlim = range(geneValues, na.rm = TRUE)
+      yrightlim = range(targetFValues, na.rm = TRUE)
     }
   }
   
@@ -464,9 +477,9 @@ plotGeneRegu = function (x.points, geneValues, reguValues, geneErrorValues, regu
     }
   }
   
-  plot.y2(x = x.points, yright = geneValues, yleft = reguValues, yleftlim = yleftlim,
+  plot.y2(x = x.points, yright = targetFValues, yleft = reguValues, yleftlim = yleftlim,
           col = col, xlab = xlab, yylab = yylab, pch = pch, main = main, yrightlim = yrightlim,
-          yrightErrorValues = geneErrorValues, yleftErrorValues = reguErrorValues)
+          yrightErrorValues = targetFErrorValues, yleftErrorValues = reguErrorValues)
   
   if (!is.null(numLines)) {
     for (aa in numLines) {
@@ -586,41 +599,41 @@ plot.y2 <- function(x, yright, yleft, yrightlim = range(yright, na.rm = TRUE),
   
 }
 
-#' plotmore
+#' plotMORE
 #'
-#' \code{plotmore} Graphical representation of the relationship between genes and regulators.
+#' \code{plotMORE} Graphical representation of the relationship between target features and regulators.
 #' 
 #' @param output Output object of MORE main function.
 #' 
-#' @param gene ID of the gene to be plotted.
-#' @param regulator ID of the regulator to be plotted. If NULL (default), all regulators of the gene are plotted.
+#' @param targetF ID of the target feature to be plotted.
+#' @param regulator ID of the regulator to be plotted. If NULL (default), all regulators of the target feature are plotted.
 #' @param reguValues Vector containing the values of a regulator. If NULL (default), these values are taken from the output object as long as they are available. 
-#' @param plotPerOmic If TRUE, all the relevant/significant regulators of the given gene and the same omic are plotted in the same graph. If FALSE (default), each regulator is plotted in a separate plot.
-#' @param gene.col Color to plot the gene. By default, 1 (black). 
+#' @param plotPerOmic If TRUE, all the relevant/significant regulators of the given target feature and the same omic are plotted in the same graph. If FALSE (default), each regulator is plotted in a separate plot.
+#' @param targetF.col Color to plot the target feature. By default, 1 (black). 
 #' @param regul.col  Color to plot the regulator. If NULL (default), a color will be assigned by the function, that will be different for each regulatory omic.
 #' @param order If TRUE (default), the values in X-axis are ordered.
 #' @param xlab Label for the X-axis.
 #' @param cont.var  Vector with length equal to the number of observations in data, which optionally may contain the values of the numerical variable (e.g. time) to be plotted on the X-axis. By default, NULL.
 #' @param cond2plot Vector or factor indicating the experimental group of each value to represent. If NULL (default), the labels are taken from the experimental design matrix. 
 #' 
-#' @return Graphical representation of the relationship between genes and regulators.
+#' @return Graphical representation of the relationship between target features and regulators.
 #'
 #' @export
 
 
-plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues = NULL, plotPerOmic = FALSE,
-                    gene.col = 1, regu.col = NULL, order = TRUE,
+plotMORE = function(output, targetF, regulator = NULL, simplify = FALSE, reguValues = NULL, plotPerOmic = FALSE,
+                    targetF.col = 1, regu.col = NULL, order = TRUE,
                     xlab = "", cont.var = NULL, cond2plot = NULL,...) {
   
   if(simplify){
     # from which omic is the regulator?
-    SigniReguGene = GetPairsGeneRegulator(genes = gene, output = output)
-    omic = SigniReguGene[SigniReguGene[,"regulator"] == regulator,'omic']
+    SigniReguTargetF = GetPairstargetFRegulator(targetFs = targetF, output = output)
+    omic = SigniReguTargetF[SigniReguTargetF[,"regulator"] == regulator,'omic']
     
-    if (output$arguments$omic.type[omic]==0){
+    if (output$arguments$omicType[omic]==0){
       df <- data.frame(
-        gen = unlist(output$arguments$GeneExpression[gene,,drop=TRUE]),
-        regulador = unlist(output$arguments$dataOmics[[omic]][regulator,,drop=TRUE]),
+        gen = unlist(output$arguments$targetData[targetF,,drop=TRUE]),
+        regulador = unlist(output$arguments$regulatoryData[[omic]][regulator,,drop=TRUE]),
         Group = output$arguments$groups)
       
     # Create a scatterplot
@@ -634,7 +647,7 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
         #geom_abline(intercept = c(coefs[1,2],coefs[2,2],coefs[3,2]),slope = c(coefs[1,3],coefs[2,3],coefs[3,3]),color=c('#15918A','#74CDF0','#EE446F'),linetype=c('solid','solid',"dashed"))+
         #geom_abline(intercept = 0,slope = coefs[2,2],color='#74CDF0')+
         #geom_abline(intercept = 0,slope = coefs[3,2],color='#EE446F',linetype="dashed")+
-        labs( x = paste("Regulator\n",regulator), y = paste("Gene Expression\n",gene))
+        labs( x = paste("Regulator\n",regulator), y = paste("Target Feature\n",targetF))
       #geom_smooth(method = "lm", se = FALSE, aes(group = group)) 
       #+geom_abline(intercept = intercept, slope = slope, color="red",  
       #linetype="dashed", size=1.5)+ 
@@ -642,8 +655,8 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
     } else {
       
       df <- data.frame(
-        gen = unlist(output$arguments$GeneExpression[gene,,drop=TRUE]),
-        regulador = unlist(output$arguments$dataOmics[[omic]][regulator,,drop=TRUE]),
+        gen = unlist(output$arguments$targetData[targetF,,drop=TRUE]),
+        regulador = unlist(output$arguments$regulatoryData[[omic]][regulator,,drop=TRUE]),
         Group = output$arguments$groups)
       df$regulador<-factor(df$regulador)
       
@@ -654,21 +667,21 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
       ggplot2::ggplot(df, aes(x = regulador, y = gen,fill=Group)) + theme_minimal()+
         geom_boxplot() + scale_fill_manual(values = custom_colors)+  scale_color_manual(values = custom_colors)+
         scale_x_discrete(labels = c('0','1')) + stat_summary(aes(color = Group),fun='median',geom = 'point', position = position_dodge(width = 0.75))+
-      labs( x = paste("Regulator \n",regulator), y = paste("Gene Expression\n",gene))
+      labs( x = paste("Regulator \n",regulator), y = paste("Target feature\n",targetF))
       
     }
   } else{
-    if(output$arguments$method=='glm'||output$arguments$method=='pls2'){
+    if(output$arguments$method=='MLR'||output$arguments$method=='ISGL'){
       
-      return(plotGLM(output, gene, regulator = regulator, reguValues = reguValues, plotPerOmic = plotPerOmic,
-                     gene.col = gene.col, regu.col = regu.col, order = order,
+      return(plotMLR(output, targetF, regulator = regulator, reguValues = reguValues, plotPerOmic = plotPerOmic,
+                     targetF.col = targetF.col, regu.col = regu.col, order = order,
                      xlab = xlab, cont.var = cont.var, cond2plot = cond2plot,...))
     }
     
-    if(output$arguments$method=='pls1'||output$arguments$method=='pls2'){
+    if(output$arguments$method=='PLS1'||output$arguments$method=='PLS2'){
       
-      return(plotPLS(output, gene, regulator = regulator, reguValues = reguValues, plotPerOmic = plotPerOmic,
-                     gene.col = gene.col, regu.col = regu.col, order = order,
+      return(plotPLS(output, targetF, regulator = regulator, reguValues = reguValues, plotPerOmic = plotPerOmic,
+                     targetF.col = targetF.col, regu.col = regu.col, order = order,
                      xlab = xlab, cont.var = cont.var, cond2plot = cond2plot,...))
     }
   }
@@ -679,8 +692,8 @@ plotmore = function(output, gene, regulator = NULL, simplify = FALSE, reguValues
 # order: Should the experimental groups be ordered for the plot? If TRUE, omic values are also ordered accordingly.
 #        If FALSE, the function assumes they were provided in the right order for a meaningful plot.
 
-plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPerOmic = FALSE,
-                    gene.col = 1, regu.col = NULL, order = TRUE,
+plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plotPerOmic = FALSE,
+                    targetF.col = 1, regu.col = NULL, order = TRUE,
                     xlab = "", cont.var = NULL, cond2plot = NULL, verbose =TRUE, ...) {
   
   # Colors for omics
@@ -688,15 +701,15 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
                         100,200,300,400,500,10,20,30,40,50,60,70,80,90,150,250,350,450,550)]
   
   if (is.null(regu.col)) {
-    any.col = omic.col[1:length(GLMoutput$arguments$dataOmics)]
+    any.col = omic.col[1:length(MLRoutput$arguments$regulatoryData)]
   } else {
-    if (length(regu.col) == length(GLMoutput$arguments$dataOmics)) {
+    if (length(regu.col) == length(MLRoutput$arguments$regulatoryData)) {
       any.col = regu.col
     } else {
-      any.col = rep(regu.col, length(GLMoutput$arguments$dataOmics))
+      any.col = rep(regu.col, length(MLRoutput$arguments$regulatoryData))
     }
   }
-  names(any.col) = names(GLMoutput$arguments$dataOmics)
+  names(any.col) = names(MLRoutput$arguments$regulatoryData)
   
   
   # Changing margin
@@ -704,8 +717,8 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
   
   # Groups to plot
   if (is.null(cond2plot)) {
-    if (!is.null(GLMoutput$arguments$edesign)) {
-      cond2plot = apply(GLMoutput$arguments$edesign, 1, paste, collapse = "_")
+    if (!is.null(MLRoutput$arguments$condition)) {
+      cond2plot = apply(MLRoutput$arguments$condition, 1, paste, collapse = "_")
     }
   }
   
@@ -721,19 +734,18 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
   } else {   # no cont.var
     
     if (!is.null(cond2plot)) { # only cond2plot
-      myreplicates = colnames(GLMoutput$arguments$GeneExpression)
+      myreplicates = colnames(MLRoutput$arguments$targetData)
     } else {  # nothing
-      myreplicates = colnames(GLMoutput$arguments$GeneExpression)
+      myreplicates = colnames(MLRoutput$arguments$targetData)
     }
   }
   
   # Cast myreplicates to character
   myreplicates = as.character(myreplicates)
-  names(myreplicates) = colnames(GLMoutput$arguments$GeneExpression)
+  names(myreplicates) = colnames(MLRoutput$arguments$targetData)
   if (order) {
     myorder = order(myreplicates)
     myreplicates = sort(myreplicates)
-    cond2plot = cond2plot[myorder]
   }
   myrepliUni = unique(myreplicates)
   
@@ -769,42 +781,60 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
     return(out_values)
   }
   
-  
-  myrepliUni = unique(myreplicates)
-  
   ## REGULATOR = NULL
   
-  if (is.null(regulator)) {  ### Plot all regulators for the given gene
+  if (is.null(regulator)) {  ### Plot all regulators for the given target feature
     
-    GLMgene = GLMoutput$ResultsPerGene[[gene]]
+    MLRtargetF = MLRoutput$ResultsPerTargetF[[targetF]]
     
-    if (is.null(GLMgene)) {
-      stop(paste("No GLM was obtained for gene", gene))
+    if (is.null(MLRtargetF)) {
+      stop(paste("No MLR was obtained for target feature", targetF))
     }
     
-    if (is.null(GLMgene$relevantRegulators)) { ## No significant regulators
+    if (is.null(MLRtargetF$relevantRegulators)) { ## No significant regulators
       
-      cat("No relevant regulators were found for this gene.\n")
+      cat("No relevant regulators were found for this target feature.\n")
       
       
     } else
     {  ## Significant regulators:
       
       # Considering multicollinearity
-      SigReg = GLMgene$allRegulators
+      SigReg = MLRtargetF$allRegulators
       SigReg = SigReg[SigReg$Rel == 1, c("regulator", "omic", "area", "filter")]
       
-      SigReg = SigReg[GLMgene$relevantRegulators,,drop = FALSE]
+      SigReg = SigReg[MLRtargetF$relevantRegulators,,drop = FALSE]
       
-      cat(paste(nrow(SigReg), "relevant regulators are to be plotted for gene", gene)); cat("\n")
+      cat(paste(nrow(SigReg), "relevant regulators are to be plotted for target feature", targetF)); cat("\n")
       
-      # Gene values
-      geneValues = GLMgene$Y$y
-      if (order) geneValues = geneValues[myorder]
-      errorValues = getErrorValues(geneValues, myreplicates)
-      geneValues = tapply(geneValues, myreplicates, mean)
-      geneValues = geneValues[myrepliUni]
-      names(geneValues) = myrepliUni
+      # Target feature values
+      targetFValues = MLRtargetF$Y$y
+      if (order) {
+        if(is.null(MLRoutput$arguments$condition)){
+          myorder = order(targetFValues)
+        } else{
+          myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+        }
+        cond2plot = cond2plot[myorder]
+        targetFValues = targetFValues[myorder]
+        
+        if (is.null(cond2plot)) {
+          numLines = NULL
+        } else {
+          condi1 = unique(cond2plot)
+          num1 = 1:length(condi1); names(num1) = condi1
+          num2 = num1[as.character(cond2plot)]
+          if (replicates) {
+            num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+          }
+          numLines = which(diff(num2) != 0)+0.5
+        }
+      }
+      
+      errorValues = getErrorValues(targetFValues, myreplicates)
+      targetFValues = tapply(targetFValues, myreplicates, mean)
+      targetFValues = targetFValues[myrepliUni]
+      names(targetFValues) = myrepliUni
       
       # X values
       x.points = 1:length(myrepliUni)
@@ -818,8 +848,8 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
           
           SigRegOmic = SigReg[SigReg$omic == oo,]
           
-          omicValues = t(GLMoutput$arguments$dataOmics[[oo]])
-          omicValues = omicValues[rownames(GLMgene$X),]
+          omicValues = t(MLRoutput$arguments$regulatoryData[[oo]])
+          omicValues = omicValues[rownames(MLRtargetF$X),]
           reguValues = omicValues[, colnames(omicValues) == SigRegOmic$regulator[1]]
           if (order) reguValues = reguValues[myorder]
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
@@ -848,11 +878,11 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
               }))
           }
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, mycol), yleftlim = yleftlim,
-                       xlab = xlab, yylab = c(gene, leftlab), pch = c(16,16),
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                       col = c(targetF.col, mycol), yleftlim = yleftlim,
+                       xlab = xlab, yylab = c(targetF, leftlab), pch = c(16,16),
                        main = oo, numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
           
           if (nrow(SigRegOmic) > 1) {
             for (i in 2:nrow(SigRegOmic)) {
@@ -880,8 +910,8 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
         
         for (rr in SigReg$regulator) {
           
-          oo = GLMoutput$ResultsPerGene[[gene]]$allRegulators[rr,"omic"]
-          omicValues = t(GLMoutput$arguments$dataOmics[[oo]])
+          oo = MLRoutput$ResultsPerTargetF[[targetF]]$allRegulators[rr,"omic"]
+          omicValues = t(MLRoutput$arguments$regulatoryData[[oo]])
           reguValues = omicValues[, colnames(omicValues) == rr]
           if (order) reguValues = reguValues[myorder]
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
@@ -892,157 +922,221 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
           
           mycol = any.col[oo]
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, mycol), xlab = xlab,
-                       yylab = c(gene, rr), pch = c(16,16),
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                       col = c(targetF.col, mycol), xlab = xlab,
+                       yylab = c(targetF, rr), pch = c(16,16),
                        main = paste(as.character(SigReg[rr, c("omic", "area")]), collapse = " "),
                        numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
           
         }
         
       }
       
-      return(GLMgene$allRegulators[GLMgene$relevantRegulators, -6])
+      return(MLRtargetF$allRegulators[MLRtargetF$relevantRegulators, -6])
     }
     
   }
   
   
-  ## GENE = NULL
+  ## targetF = NULL
   
-  if (is.null(gene)) {  ### Plot all genes regulated by the regulator
+  if (is.null(targetF)) {  ### Plot all target features regulated by the regulator
     
-    SigniReguGene = GetPairsGeneRegulator(genes = NULL, output = GLMoutput)
-    SigniReguGene = SigniReguGene[SigniReguGene[,"regulator"] == regulator,]
-    myomics = SigniReguGene[,"omic"]
+    SigniReguTargetF = GetPairstargetFRegulator(targetFs = NULL, output = MLRoutput)
+    SigniReguTargetF = SigniReguTargetF[SigniReguTargetF[,"regulator"] == regulator,]
+    myomics = SigniReguTargetF[,"omic"]
     myomic = unique(myomics)
     
-    if (nrow(SigniReguGene) > 0) {  # When there are genes regulated by this regulator
+    if (nrow(SigniReguTargetF) > 0) {  # When there are target features regulated by this regulator
       
       if (is.null(reguValues)) {  # User does not provide reguValues
-        reguValues = as.numeric(GLMoutput$arguments$dataOmics[[myomic]][regulator,])
+        reguValues = as.numeric(MLRoutput$arguments$regulatoryData[[myomic]][regulator,])
       }
       
-      numGenes = length(SigniReguGene$gene)
-      if(verbose) {cat(paste(numGenes, "genes are regulated by", regulator)); cat("\n")}
+      numtargetFs = length(SigniReguTargetF$targetF)
+      if(verbose) {cat(paste(numtargetFs, "target features are regulated by", regulator)); cat("\n")}
       
       if (length(reguValues) > 0) {  # reguValues are available (recovered or given by user)
         
-        if (order) reguValues = reguValues[myorder]
-        errorValuesRegu = getErrorValues(reguValues, myreplicates)
-        reguValues = tapply(reguValues, myreplicates, mean)
-        reguValues = reguValues[myrepliUni]
-        names(reguValues) = myrepliUni
-        
-        lapply(1:numGenes, function (i) {
+        lapply(1:numtargetFs, function (i) {
+
+          targetFValues = MLRoutput$ResultsPerTargetF[[SigniReguTargetF[i,"targetF"]]]$Y$y
+          if (order) {
+            if(is.null(MLRoutput$arguments$condition)){
+              myorder = order(targetFValues)
+            } else{
+              myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+            }
+            targetFValues = targetFValues[myorder]
+            reguValues = reguValues[myorder]
+            if (is.null(cond2plot)) {
+              numLines = NULL
+            } else {
+              cond2plot = cond2plot[myorder]
+              condi1 = unique(cond2plot)
+              num1 = 1:length(condi1); names(num1) = condi1
+              num2 = num1[as.character(cond2plot)]
+              if (replicates) {
+                num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+              }
+              numLines = which(diff(num2) != 0)+0.5
+            }
+          }
+          errorValuesRegu = getErrorValues(reguValues, myreplicates)
+          reguValues = tapply(reguValues, myreplicates, mean)
+          reguValues = reguValues[myrepliUni]
+          names(reguValues) = myrepliUni
           
-          geneValues = GLMoutput$ResultsPerGene[[SigniReguGene[i,"gene"]]]$Y$y
-          if (order) geneValues = geneValues[myorder]
-          errorValues = getErrorValues(geneValues, myreplicates)
-          geneValues = tapply(geneValues, myreplicates, mean)
-          geneValues = geneValues[myrepliUni]
-          names(geneValues) = myrepliUni
+          errorValues = getErrorValues(targetFValues, myreplicates)
+          targetFValues = tapply(targetFValues, myreplicates, mean)
+          targetFValues = targetFValues[myrepliUni]
+          names(targetFValues) = myrepliUni
+          
           
           x.points = 1:length(myrepliUni)
           eje = myrepliUni
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, any.col[myomics[i]]), xlab = xlab,
-                       yylab = c(SigniReguGene[i,"gene"], regulator), pch = c(16,16),
-                       main = paste(as.character(SigniReguGene[1,c("omic", "area")]), collapse = " "),
-                       numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
-        })
-      } else { cat("Regulator values could not be recovered from GLMoutput. Please provide them in reguValues argument to generate the plot.\n") }
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                          col = c(targetF.col, any.col[myomics[i]]), xlab = xlab,
+                          yylab = c(SigniReguTargetF[i,"targetF"], regulator), pch = c(16,16),
+                          main = paste(as.character(SigniReguTargetF[1,c("omic", "area")]), collapse = " "),
+                          numLines = numLines, x.names = eje,
+                          targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                          
+        
+      })
+        
+      } else { cat("Regulator values could not be recovered from MLRoutput. Please provide them in reguValues argument to generate the plot.\n") }
       
-      return(SigniReguGene$gene)
+      return(SigniReguTargetF$targetF)
       
-    } else { cat(paste("There are no genes relevantly regulated by", regulator)); cat("\n") }
+    } else { cat(paste("There are no target features relevantly regulated by", regulator)); cat("\n") }
     
   }
   
   
-  ## GENE + REGULATOR
+  ## targetF + REGULATOR
   
-  if (!is.null(gene) && !is.null(regulator)) {  ### Plot only the given gene and the given regulator
+  if (!is.null(targetF) && !is.null(regulator)) {  ### Plot only the given target feature and the given regulator
     
-    geneResults = GLMoutput$ResultsPerGene[[gene]]
+    targetFResults = MLRoutput$ResultsPerTargetF[[targetF]]
     
-    if (is.null(geneResults)) {
-      stop(paste("No GLM was obtained for gene", gene))
+    if (is.null(targetFResults)) {
+      stop(paste("No MLR was obtained for target feature", targetF))
     } else
     {
-      myomic = geneResults$allRegulators[regulator, "omic"]
+      myomic = targetFResults$allRegulators[regulator, "omic"]
       
       if (is.null(reguValues)) {  # User does not provide reguValues
-        reguValues = as.numeric(GLMoutput$arguments$dataOmics[[myomic]][regulator,]) # regulator values
+        reguValues = as.numeric(MLRoutput$arguments$regulatoryData[[myomic]][regulator,]) # regulator values
       }
       
       if (length(reguValues) > 0) {  # reguValues are available (recovered or given by user)
         
-        if (order)  reguValues = reguValues[myorder]
+        targetFValues = MLRoutput$ResultsPerTargetF[[targetF]]$Y$y
+        if (order) {
+          if(is.null(MLRoutput$arguments$condition)){
+            myorder = order(targetFValues)
+          } else{
+            myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+          }
+          targetFValues = targetFValues[myorder]
+          reguValues = reguValues[myorder]
+          if (is.null(cond2plot)) {
+            numLines = NULL
+          } else {
+            cond2plot = cond2plot[myorder]
+            condi1 = unique(cond2plot)
+            num1 = 1:length(condi1); names(num1) = condi1
+            num2 = num1[as.character(cond2plot)]
+            if (replicates) {
+              num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+            }
+            numLines = which(diff(num2) != 0)+0.5
+          }
+        }
+        
         errorValuesRegu = getErrorValues(reguValues, myreplicates)
         reguValues = tapply(reguValues, myreplicates, mean, na.rm = TRUE)
         reguValues = reguValues[myrepliUni]
         names(reguValues) = myrepliUni
         
-        geneValues = GLMoutput$ResultsPerGene[[gene]]$Y$y
-        if (order) geneValues = geneValues[myorder]
-        errorValues = getErrorValues(geneValues, myreplicates)
-        geneValues = tapply(geneValues, myreplicates, mean)
-        geneValues = geneValues[myrepliUni]
-        names(geneValues) = myrepliUni
+        errorValues = getErrorValues(targetFValues, myreplicates)
+        targetFValues = tapply(targetFValues, myreplicates, mean, na.rm = TRUE)
+        targetFValues = targetFValues[myrepliUni]
+        names(targetFValues) = myrepliUni
         
         x.points = 1:length(myrepliUni)
         eje = myrepliUni
         
-        plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                     col = c(gene.col, any.col[myomic]), xlab = xlab,
-                     yylab = c(gene, regulator), pch = c(16,16),
-                     main = paste(as.character(geneResults$allRegulators[regulator, c("omic", "area")]),
+        plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                     col = c(targetF.col, any.col[myomic]), xlab = xlab,
+                     yylab = c(targetF, regulator), pch = c(16,16),
+                     main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                   collapse = " "),
                      numLines = numLines, x.names = eje,
-                     geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                     targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
         
       } else {
         
-        cat("Regulator values could not be recovered from GLMoutput.\n")
+        cat("Regulator values could not be recovered from MLRoutput.\n")
         
-        regulator = geneResults$allRegulators[regulator,"filter"]
+        regulator = targetFResults$allRegulators[regulator,"filter"]
         
-        if (regulator %in% rownames(geneResults$allRegulators)) {
+        if (regulator %in% rownames(targetFResults$allRegulators)) {
           
           cat(paste(regulator, "values will be plotted instead.")); cat("\n")
           cat(paste(regulator, "summarizes information from the following correlated regulators:")); cat("\n")
-          cat(geneResults$allRegulators[geneResults$allRegulators[,"filter"] == regulator,"regulator"]); cat("\n")
+          cat(targetFResults$allRegulators[targetFResults$allRegulators[,"filter"] == regulator,"regulator"]); cat("\n")
           
-          reguValues = geneResults$X
+          reguValues = targetFResults$X
           reguValues = reguValues[, colnames(reguValues) == regulator]
-          if (order) reguValues = reguValues[myorder]
+          
+          targetFValues = MLRoutput$ResultsPerTargetF[[gene]]$Y$y
+          if (order) {
+            if(is.null(MLRoutput$arguments$condition)){
+              myorder = order(targetFValues)
+            } else{
+              myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+            }
+            targetFValues = targetFValues[myorder]
+            reguValues = reguValues[myorder]
+            if (is.null(cond2plot)) {
+              numLines = NULL
+            } else {
+              cond2plot = cond2plot[myorder]
+              condi1 = unique(cond2plot)
+              num1 = 1:length(condi1); names(num1) = condi1
+              num2 = num1[as.character(cond2plot)]
+              if (replicates) {
+                num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+              }
+              numLines = which(diff(num2) != 0)+0.5
+            }
+          }
+          
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
           
           reguValues = tapply(reguValues, myreplicates, mean)
           reguValues = reguValues[myrepliUni]
           names(reguValues) = myrepliUni
           
-          geneValues = GLMoutput$ResultsPerGene[[gene]]$Y$y
-          if (order) geneValues = geneValues[myorder]
-          errorValues = getErrorValues(geneValues, myreplicates)
-          geneValues = tapply(geneValues, myreplicates, mean)
-          geneValues = geneValues[myrepliUni]
-          names(geneValues) = myrepliUni
+          errorValues = getErrorValues(targetFValues, myreplicates)
+          targetFValues = tapply(targetFValues, myreplicates, mean)
+          targetFValues = targetFValues[myrepliUni]
+          names(targetFValues) = myrepliUni
           
           x.points = 1:length(myrepliUni)
           eje = myrepliUni
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, any.col[myomic]), xlab = xlab,
-                       yylab = c(gene, regulator), pch = c(16,16),
-                       main = paste(as.character(geneResults$allRegulators[regulator, c("omic", "area")]),
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                       col = c(targetF.col, any.col[myomic]), xlab = xlab,
+                       yylab = c(targetF, regulator), pch = c(16,16),
+                       main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                     collapse = " "),
                        numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
         } else {
           cat("The selected regulator was not declared as relevant by the ElasticNet\n")
           cat("Please, either select another regulator or provide the regulator values.\n")
@@ -1056,8 +1150,8 @@ plotGLM = function (GLMoutput, gene, regulator = NULL, reguValues = NULL, plotPe
   
 }
 
-plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPerOmic = FALSE,
-                    gene.col = 1, regu.col = NULL, order = TRUE,
+plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plotPerOmic = FALSE,
+                    targetF.col = 1, regu.col = NULL, order = TRUE,
                     xlab = "", cont.var = NULL, cond2plot = NULL, verbose = TRUE,...) {
   
   # Colors for omics
@@ -1065,15 +1159,15 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
                         100,200,300,400,500,10,20,30,40,50,60,70,80,90,150,250,350,450,550)]
   
   if (is.null(regu.col)) {
-    any.col = omic.col[1:length(PLSoutput$arguments$dataOmics)]
+    any.col = omic.col[1:length(PLSoutput$arguments$regulatoryData)]
   } else {
-    if (length(regu.col) == length(PLSoutput$arguments$dataOmics)) {
+    if (length(regu.col) == length(PLSoutput$arguments$regulatoryData)) {
       any.col = regu.col
     } else {
-      any.col = rep(regu.col, length(PLSoutput$arguments$dataOmics))
+      any.col = rep(regu.col, length(PLSoutput$arguments$regulatoryData))
     }
   }
-  names(any.col) = names(PLSoutput$arguments$dataOmics)
+  names(any.col) = names(PLSoutput$arguments$regulatoryData)
   
   
   # Changing margin
@@ -1081,8 +1175,8 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
   
   # Groups to plot
   if (is.null(cond2plot)) {
-    if (!is.null(PLSoutput$arguments$edesign)) {
-      cond2plot = apply(PLSoutput$arguments$edesign, 1, paste, collapse = "_")
+    if (!is.null(PLSoutput$arguments$condition)) {
+      cond2plot = apply(PLSoutput$arguments$condition, 1, paste, collapse = "_")
     }
   }
   
@@ -1098,19 +1192,18 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
   } else {   # no cont.var
     
     if (!is.null(cond2plot)) { # only cond2plot
-      myreplicates = colnames(PLSoutput$arguments$GeneExpression)
+      myreplicates = colnames(PLSoutput$arguments$targetData)
     } else {  # nothing
-      myreplicates = colnames(PLSoutput$arguments$GeneExpression)
+      myreplicates = colnames(PLSoutput$arguments$targetData)
     }
   }
   
   # Cast myreplicates to character
   myreplicates = as.character(myreplicates)
-  names(myreplicates) = colnames(PLSoutput$arguments$GeneExpression)
+  names(myreplicates) = colnames(PLSoutput$arguments$targetData)
   if (order) {
     myorder = order(myreplicates)
     myreplicates = sort(myreplicates)
-    cond2plot = cond2plot[myorder]
   }
   myrepliUni = unique(myreplicates)
   
@@ -1147,41 +1240,59 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
   }
   
   
-  myrepliUni = unique(myreplicates)
-  
   ## REGULATOR = NULL
   
-  if (is.null(regulator)) {  ### Plot all regulators for the given gene
+  if (is.null(regulator)) {  ### Plot all regulators for the given target feature
     
-    PLSgene = PLSoutput$ResultsPerGene[[gene]]
+    PLStargetF = PLSoutput$ResultsPerTargetF[[targetF]]
     
-    if (is.null(PLSgene)) {
-      stop(paste("No GLM was obtained for gene", gene))
+    if (is.null(PLStargetF)) {
+      stop(paste("No PLS was obtained for target feature", targetF))
     }
     
-    if (is.null(PLSgene$significantRegulators)) { ## No significant regulators
+    if (is.null(PLStargetF$significantRegulators)) { ## No significant regulators
       
-      cat("No significant regulators were found for this gene.\n")
+      cat("No significant regulators were found for this target feature.\n")
       
       
     } else
     {  ## Significant regulators:
       
       # Considering multicollinearity
-      SigReg = PLSgene$allRegulators
+      SigReg = PLStargetF$allRegulators
       SigReg = SigReg[SigReg$Sig == 1, c("regulator", "omic", "area", "filter")]
       
-      SigReg = SigReg[PLSgene$significantRegulators,,drop = FALSE]
+      SigReg = SigReg[PLStargetF$significantRegulators,,drop = FALSE]
       
-      cat(paste(nrow(SigReg), "significant regulators are to be plotted for gene", gene)); cat("\n")
+      cat(paste(nrow(SigReg), "significant regulators are to be plotted for target feature", targetF)); cat("\n")
       
-      # Gene values
-      geneValues = PLSgene$Y$y
-      if (order) geneValues = geneValues[myorder]
-      errorValues = getErrorValues(geneValues, myreplicates)
-      geneValues = tapply(geneValues, myreplicates, mean)
-      geneValues = geneValues[myrepliUni]
-      names(geneValues) = myrepliUni
+      # Target feature values
+      targetFValues = PLStargetF$Y$y
+      if (order) {
+        if(is.null(PLSoutput$arguments$condition)){
+          myorder = order(targetFValues)
+        } else{
+          myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+        }
+        cond2plot = cond2plot[myorder]
+        targetFValues = targetFValues[myorder]
+        if (is.null(cond2plot)) {
+          numLines = NULL
+        } else {
+          condi1 = unique(cond2plot)
+          num1 = 1:length(condi1); names(num1) = condi1
+          num2 = num1[as.character(cond2plot)]
+          if (replicates) {
+            num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+          }
+          numLines = which(diff(num2) != 0)+0.5
+        }
+      }
+      
+      errorValues = getErrorValues(targetFValues, myreplicates)
+      targetFValues = tapply(targetFValues, myreplicates, mean)
+      targetFValues = targetFValues[myrepliUni]
+      names(targetFValues) = myrepliUni
       
       # X values
       x.points = 1:length(myrepliUni)
@@ -1195,8 +1306,8 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
           
           SigRegOmic = SigReg[SigReg$omic == oo,]
           
-          omicValues = t(PLSoutput$arguments$dataOmics[[oo]])
-          omicValues = omicValues[rownames(PLSgene$X),]
+          omicValues = t(PLSoutput$arguments$regulatoryData[[oo]])
+          omicValues = omicValues[rownames(PLStargetF$X),]
           reguValues = omicValues[, colnames(omicValues) == SigRegOmic$regulator[1]]
           if (order) reguValues = reguValues[myorder]
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
@@ -1225,11 +1336,11 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
               }))
           }
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, mycol), yleftlim = yleftlim,
-                       xlab = xlab, yylab = c(gene, leftlab), pch = c(16,16),
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                       col = c(targetF.col, mycol), yleftlim = yleftlim,
+                       xlab = xlab, yylab = c(targetF, leftlab), pch = c(16,16),
                        main = oo, numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
           
           if (nrow(SigRegOmic) > 1) {
             for (i in 2:nrow(SigRegOmic)) {
@@ -1257,8 +1368,8 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
         
         for (rr in SigReg$regulator) {
           
-          oo = PLSoutput$ResultsPerGene[[gene]]$allRegulators[rr,"omic"]
-          omicValues = t(PLSoutput$arguments$dataOmics[[oo]])
+          oo = PLSoutput$ResultsPerTargetF[[targetF]]$allRegulators[rr,"omic"]
+          omicValues = t(PLSoutput$arguments$regulatoryData[[oo]])
           reguValues = omicValues[, colnames(omicValues) == rr]
           if (order) reguValues = reguValues[myorder]
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
@@ -1269,40 +1380,39 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
           
           mycol = any.col[oo]
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, mycol), xlab = xlab,
-                       yylab = c(gene, rr), pch = c(16,16),
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                       col = c(targetF.col, mycol), xlab = xlab,
+                       yylab = c(targetF, rr), pch = c(16,16),
                        main = paste(as.character(SigReg[rr, c("omic", "area")]), collapse = " "),
                        numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
           
         }
         
       }
       
-      return(PLSgene$allRegulators[PLSgene$significantRegulators, -6])
+      return(PLStargetF$allRegulators[PLStargetF$significantRegulators, -6])
     }
     
   }
   
+  ## targetF = NULL
   
-  ## GENE = NULL
-  
-  if (is.null(gene)) {  ### Plot all genes regulated by the regulator
+  if (is.null(targetF)) {  ### Plot all target features regulated by the regulator
     
-    SigniReguGene = GetPairsGeneRegulator(genes = NULL, output = PLSoutput)
-    SigniReguGene = SigniReguGene[SigniReguGene[,"regulator"] == regulator,]
-    myomics = SigniReguGene[,"omic"]
+    SigniReguTargetF = GetPairstargetFRegulator(targetFs = NULL, output = PLSoutput)
+    SigniReguTargetF = SigniReguTargetF[SigniReguTargetF[,"regulator"] == regulator,]
+    myomics = SigniReguTargetF[,"omic"]
     myomic = unique(myomics)
     
-    if (nrow(SigniReguGene) > 0) {  # When there are genes regulated by this regulator
+    if (nrow(SigniReguTargetF) > 0) {  # When there are targetFs regulated by this regulator
       
       if (is.null(reguValues)) {  # User does not provide reguValues
-        reguValues = as.numeric(PLSoutput$arguments$dataOmics[[myomic]][regulator,])
+        reguValues = as.numeric(PLSoutput$arguments$regulatoryData[[myomic]][regulator,])
       }
       
-      numGenes = length(SigniReguGene$gene)
-      if(verbose) {cat(paste(numGenes, "genes are regulated by", regulator)); cat("\n")}
+      numtargetFs = length(SigniReguTargetF$targetF)
+      if(verbose) {cat(paste(numtargetFs, "target features are regulated by", regulator)); cat("\n")}
       
       if (length(reguValues) > 0) {  # reguValues are available (recovered or given by user)
         
@@ -1312,116 +1422,176 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
         reguValues = reguValues[myrepliUni]
         names(reguValues) = myrepliUni
         
-        lapply(1:numGenes, function (i) {
+        lapply(1:numtargetFs, function (i) {
           
-          geneValues = PLSoutput$ResultsPerGene[[SigniReguGene[i,"gene"]]]$Y$y
-          if (order) geneValues = geneValues[myorder]
-          errorValues = getErrorValues(geneValues, myreplicates)
-          geneValues = tapply(geneValues, myreplicates, mean)
-          geneValues = geneValues[myrepliUni]
-          names(geneValues) = myrepliUni
+          targetFValues = PLSoutput$ResultsPerTargetF[[SigniReguTargetF[i,"targetF"]]]$Y$y
+          if (order) {
+            if(is.null(PLSoutput$arguments$condition)){
+              myorder = order(targetFValues)
+            } else{
+              myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+            }
+            targetFValues = targetFValues[myorder]
+            reguValues = reguValues[myorder]
+            cond2plot = cond2plot[myorder]
+            if (is.null(cond2plot)) {
+              numLines = NULL
+            } else {
+              condi1 = unique(cond2plot)
+              num1 = 1:length(condi1); names(num1) = condi1
+              num2 = num1[as.character(cond2plot)]
+              if (replicates) {
+                num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+              }
+              numLines = which(diff(num2) != 0)+0.5
+            }
+          }
+          
+          errorValues = getErrorValues(targetFValues, myreplicates)
+          targetFValues = tapply(targetFValues, myreplicates, mean)
+          targetFValues = targetFValues[myrepliUni]
+          names(targetFValues) = myrepliUni
           
           x.points = 1:length(myrepliUni)
           eje = myrepliUni
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, any.col[myomics[i]]), xlab = xlab,
-                       yylab = c(SigniReguGene[i,"gene"], regulator), pch = c(16,16),
-                       main = paste(as.character(SigniReguGene[1,c("omic", "area")]), collapse = " "),
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                       col = c(targetF.col, any.col[myomics[i]]), xlab = xlab,
+                       yylab = c(SigniReguTargetF[i,"targetF"], regulator), pch = c(16,16),
+                       main = paste(as.character(SigniReguTargetF[1,c("omic", "area")]), collapse = " "),
                        numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
         })
       } else { cat("Regulator values could not be recovered from output. Please provide them in reguValues argument to generate the plot.\n") }
       
-      return(SigniReguGene$gene)
+      return(SigniReguTargetF$targetF)
       
-    } else { cat(paste("There are no genes significantly regulated by", regulator)); cat("\n") }
+    } else { cat(paste("There are no target features significantly regulated by", regulator)); cat("\n") }
     
   }
   
   
-  ## GENE + REGULATOR
+  ## targetF + REGULATOR
   
-  if (!is.null(gene) && !is.null(regulator)) {  ### Plot only the given gene and the given regulator
+  if (!is.null(targetF) && !is.null(regulator)) {  ### Plot only the given target feature and the given regulator
     
-    geneResults = PLSoutput$ResultsPerGene[[gene]]
+    targetFResults = PLSoutput$ResultsPerTargetF[[targetF]]
     
-    if (is.null(geneResults)) {
-      stop(paste("No GLM was obtained for gene", gene))
+    if (is.null(targetFResults)) {
+      stop(paste("No PLS was obtained for target feature", targetF))
     } else
     {
-      myomic = geneResults$allRegulators[regulator, "omic"]
+      myomic = targetFResults$allRegulators[regulator, "omic"]
       
       if (is.null(reguValues)) {  # User does not provide reguValues
-        reguValues = as.numeric(PLSoutput$arguments$dataOmics[[myomic]][regulator,]) # regulator values
+        reguValues = as.numeric(PLSoutput$arguments$regulatoryData[[myomic]][regulator,]) # regulator values
       }
       
       if (length(reguValues) > 0) {  # reguValues are available (recovered or given by user)
         
-        if (order)  reguValues = reguValues[myorder]
+        targetFValues = PLSoutput$ResultsPerTargetF[[targetF]]$Y$y
+        if (order) {
+          if(is.null(PLSoutput$arguments$condition)){
+            myorder = order(targetFValues)
+          } else{
+            myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+          }
+          targetFValues = targetFValues[myorder]
+          reguValues = reguValues[myorder]
+          cond2plot = cond2plot[myorder]
+          if (is.null(cond2plot)) {
+            numLines = NULL
+          } else {
+            condi1 = unique(cond2plot)
+            num1 = 1:length(condi1); names(num1) = condi1
+            num2 = num1[as.character(cond2plot)]
+            if (replicates) {
+              num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+            }
+            numLines = which(diff(num2) != 0)+0.5
+          }
+        }
+        
         errorValuesRegu = getErrorValues(reguValues, myreplicates)
         reguValues = tapply(reguValues, myreplicates, mean, na.rm = TRUE)
         reguValues = reguValues[myrepliUni]
         names(reguValues) = myrepliUni
         
-        geneValues = PLSoutput$ResultsPerGene[[gene]]$Y$y
-        if (order) geneValues = geneValues[myorder]
-        errorValues = getErrorValues(geneValues, myreplicates)
-        geneValues = tapply(geneValues, myreplicates, mean)
-        geneValues = geneValues[myrepliUni]
-        names(geneValues) = myrepliUni
+        errorValues = getErrorValues(targetFValues, myreplicates)
+        targetFValues = tapply(targetFValues, myreplicates, mean)
+        targetFValues = targetFValues[myrepliUni]
+        names(targetFValues) = myrepliUni
         
         x.points = 1:length(myrepliUni)
         eje = myrepliUni
         
-        plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                     col = c(gene.col, any.col[myomic]), xlab = xlab,
-                     yylab = c(gene, regulator), pch = c(16,16),
-                     main = paste(as.character(geneResults$allRegulators[regulator, c("omic", "area")]),
+        plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                     col = c(targetF.col, any.col[myomic]), xlab = xlab,
+                     yylab = c(targetF, regulator), pch = c(16,16),
+                     main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                   collapse = " "),
                      numLines = numLines, x.names = eje,
-                     geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                     targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
         
       } else {
         
         cat("Regulator values could not be recovered from output.\n")
         
-        regulator = geneResults$allRegulators[regulator,"filter"]
+        regulator = targetFResults$allRegulators[regulator,"filter"]
         
-        if (regulator %in% rownames(geneResults$allRegulators)) {
+        if (regulator %in% rownames(targetFResults$allRegulators)) {
           
           cat(paste(regulator, "values will be plotted instead.")); cat("\n")
           cat(paste(regulator, "summarizes information from the following correlated regulators:")); cat("\n")
-          cat(geneResults$allRegulators[geneResults$allRegulators[,"filter"] == regulator,"regulator"]); cat("\n")
+          cat(targetFResults$allRegulators[targetFResults$allRegulators[,"filter"] == regulator,"regulator"]); cat("\n")
           
-          reguValues = geneResults$X
+          reguValues = targetFResults$X
           reguValues = reguValues[, colnames(reguValues) == regulator]
-          if (order) reguValues = reguValues[myorder]
-          errorValuesRegu = getErrorValues(reguValues, myreplicates)
+          targetFValues = PLSoutput$ResultsPerTargetF[[targetF]]$Y$y
+          if (order) {
+            if(is.null(PLSoutput$arguments$condition)){
+              myorder = order(targetFValues)
+            } else{
+              myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+            }
+            targetFValues = targetFValues[myorder]
+            reguValues = reguValues[myorder]
+            cond2plot = cond2plot[myorder]
+            if (is.null(cond2plot)) {
+              numLines = NULL
+            } else {
+              condi1 = unique(cond2plot)
+              num1 = 1:length(condi1); names(num1) = condi1
+              num2 = num1[as.character(cond2plot)]
+              if (replicates) {
+                num2 = aggregate(num2, by = list("rep" = myreplicates), unique)$x
+              }
+              numLines = which(diff(num2) != 0)+0.5
+            }
+          }
           
+          errorValuesRegu = getErrorValues(reguValues, myreplicates)
           reguValues = tapply(reguValues, myreplicates, mean)
           reguValues = reguValues[myrepliUni]
           names(reguValues) = myrepliUni
           
-          geneValues = PLSoutput$ResultsPerGene[[gene]]$Y$y
-          if (order) geneValues = geneValues[myorder]
-          errorValues = getErrorValues(geneValues, myreplicates)
-          geneValues = tapply(geneValues, myreplicates, mean)
-          geneValues = geneValues[myrepliUni]
-          names(geneValues) = myrepliUni
+          errorValues = getErrorValues(targetFValues, myreplicates)
+          targetFValues = tapply(targetFValues, myreplicates, mean)
+          targetFValues = targetFValues[myrepliUni]
+          names(targetFValues) = myrepliUni
           
           x.points = 1:length(myrepliUni)
           eje = myrepliUni
           
-          plotGeneRegu(x.points = x.points, geneValues = geneValues, reguValues = reguValues,
-                       col = c(gene.col, any.col[myomic]), xlab = xlab,
-                       yylab = c(gene, regulator), pch = c(16,16),
-                       main = paste(as.character(geneResults$allRegulators[regulator, c("omic", "area")]),
+          plotTargetFRegu(x.points = x.points, targetFValues = targetFValues, reguValues = reguValues,
+                       col = c(targetF.col, any.col[myomic]), xlab = xlab,
+                       yylab = c(targetF, regulator), pch = c(16,16),
+                       main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                     collapse = " "),
                        numLines = numLines, x.names = eje,
-                       geneErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
         } else {
-          cat("The selected regulator was not declared as significant by the ElasticNet\n")
+          cat("The selected regulator was not declared as significant by the PLS model\n")
           cat("Please, either select another regulator or provide the regulator values.\n")
         }
         
@@ -1435,45 +1605,45 @@ plotPLS = function (PLSoutput, gene, regulator = NULL, reguValues = NULL, plotPe
 
 ## Plots PLS ----------
 
-#' plotweight
+#' plotWeight
 #'
-#' \code{plotweight} Function to be applied to \link{more} main function output.
+#' \code{plotWeight} Function to be applied to \link{more} main function output.
 #' 
 #' @param output Output object of MORE main function.
-#' @param gene Gene of which the user wants visualize the weightings of the model.
+#' @param targetF Target feature of which the user wants visualize the weightings of the model.
 #' @param axe1 Number of the PLS component to plot in the X axis
 #' @param axe2 Number of the PLS component to plot in the Y axis
 #' 
-#' @return Plots the weighting star of the regulators identified as significant for the selected gene.
+#' @return Plots the weighting star of the regulators identified as significant for the selected target feature.
 #' @export
 
-plotweight<-function(output, gene,axe1=1,axe2=2){
+plotWeight<-function(output, targetF,axe1=1,axe2=2){
   
-  if(output$GlobalSummary$GoodnessOfFit[gene,'ncomp']==1) {
+  if(output$GlobalSummary$GoodnessOfFit[targetF,'ncomp']==1) {
     warning('The original component extracted a unique component. The visuallization would be hard')
-    if (ncol(output$arguments$GeneExpression)<7){cross = output$arguments$GeneExpression -2}else{cross =7}
-    pls = ropls::opls(output$ResultsPerGene[[gene]]$X[,output$ResultsPerGene[[gene]]$significantRegulators,drop=FALSE], output$ResultsPerGene[[gene]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[gene,'ncomp'])
+    if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
+    pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
     
-    plot(pls@weightStarMN[,1], rep(0,length(output$ResultsPerGene[[gene]]$significantRegulators)),
+    plot(pls@weightStarMN[,1], rep(0,length(output$ResultsPerTargetF[[targetF]]$significantRegulators)),
          main = "Weights*",
          xlab = paste('w*c', axe1), ylab = paste('w*c', axe2),
          pch = 18, col = "blue", xlim = c(-1,1))
     
     points(pls@cMN[,1], 0, pch = 18, col = "red")
     # Asignamos las etiquetas
-    text(pls@weightStarMN[,1], rep(0,length(output$ResultsPerGene[[gene]]$significantRegulators)),
+    text(pls@weightStarMN[,1], rep(0,length(output$ResultsPerTargetF[[targetF]]$significantRegulators)),
          labels = row.names(pls@weightStarMN),
          cex = 0.6, srt = 60, pos = 2, col = "black")
-    text(pls@cMN[,1], 0, labels = gene, cex =
+    text(pls@cMN[,1], 0, labels = targetF, cex =
            0.6, srt = 60, pos = 4, col = 'black')
     abline(h=0)
-    legend("topleft", legend = c("X", gene),cex = 0.5,
+    legend("topleft", legend = c("X", targetF),cex = 0.5,
            pch = 18, col = c("blue", "red"))
   } else{
-    if(axe1> output$GlobalSummary$GoodnessOfFit[gene,'ncomp'] | axe2>output$GlobalSummary$GoodnessOfFit[gene,'ncomp']) stop('Error: The model did not extracted originally that many components')
-    if (ncol(output$arguments$GeneExpression)<7){cross = output$arguments$GeneExpression -2}else{cross =7}
+    if(axe1> output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'] | axe2>output$GlobalSummary$GoodnessOfFit[targetF,'ncomp']) stop('Error: The model did not extracted originally that many components')
+    if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
     #Create the PLS model only with the variables that resulted significant in the model
-    pls = ropls::opls(output$ResultsPerGene[[gene]]$X[,output$ResultsPerGene[[gene]]$significantRegulators,drop=FALSE], output$ResultsPerGene[[gene]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[gene,'ncomp'])
+    pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
 
     #Create the weighting plots
     plot(pls@weightStarMN[,axe1], pls@weightStarMN[,axe2],
@@ -1486,33 +1656,33 @@ plotweight<-function(output, gene,axe1=1,axe2=2){
     text(pls@weightStarMN[,axe1], pls@weightStarMN[,axe2],
          labels = row.names(pls@weightStarMN),
          cex = 0.6, pos = 4, col = "black")
-    text(pls@cMN[,axe1], pls@cMN[,axe2], labels = gene, cex =
+    text(pls@cMN[,axe1], pls@cMN[,axe2], labels = targetF, cex =
            0.6, pos = 4, col = 'black')
     abline(h=0, v=0)
-    legend("topleft", legend = c("X", gene),cex = 0.5,
+    legend("topleft", legend = c("X", targetF),cex = 0.5,
            pch = 18, col = c("blue", "red"))
   }
   
 }
 
-#' plotscores
+#' plotScores
 #'
-#' \code{plotscores} Function to be applied to \link{more} main function output.
+#' \code{plotScores} Function to be applied to \link{more} main function output.
 #' 
 #' @param output Output object of MORE main function.
-#' @param gene Gene of which the user wants visualize the weightings of the model.
+#' @param targetF Target feature of which the user wants visualize the weightings of the model.
 #' @param axe1 Number of the PLS component to plot in the X axis
 #' @param axe2 Number of the PLS component to plot in the Y axis
 #' 
-#' @return Plots the scores of the samples under the PLS model generated by the significant regulators for the selected gene.
+#' @return Plots the scores of the samples under the PLS model generated by the significant regulators for the selected target feature.
 #' @export
 
-plotscores<-function(output, gene,axe1=1,axe2=2){
+plotScores<-function(output, targetF,axe1=1,axe2=2){
   
-  if(output$GlobalSummary$GoodnessOfFit[gene,'ncomp']==1) {
+  if(output$GlobalSummary$GoodnessOfFit[targetF,'ncomp']==1) {
     warning('The original component extracted a unique component. The visuallization would be hard')
-    if (ncol(output$arguments$GeneExpression)<7){cross = output$arguments$GeneExpression -2}else{cross =7}
-    pls = ropls::opls(output$ResultsPerGene[[gene]]$X[,output$ResultsPerGene[[gene]]$significantRegulators,drop=FALSE], output$ResultsPerGene[[gene]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[gene,'ncomp'])
+    if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
+    pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
     
     plot(pls@scoreMN[,1], rep(0,length(output$arguments$groups)),
          main = "Scores",
@@ -1525,10 +1695,10 @@ plotscores<-function(output, gene,axe1=1,axe2=2){
          cex = 0.6, srt = 60, pos = 2, col = 'black')
     abline(h=0)
   } else{
-    if(axe1> output$GlobalSummary$GoodnessOfFit[gene,'ncomp'] | axe2>output$GlobalSummary$GoodnessOfFit[gene,'ncomp']) stop('Error: The model did not extracted originally that many components')
-    if (ncol(output$arguments$GeneExpression)<7){cross = output$arguments$GeneExpression -2}else{cross =7}
+    if(axe1> output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'] | axe2>output$GlobalSummary$GoodnessOfFit[targetF,'ncomp']) stop('Error: The model did not extracted originally that many components')
+    if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
     #Create the PLS model only with the variables that resulted significant in the model
-    pls = ropls::opls(output$ResultsPerGene[[gene]]$X[,output$ResultsPerGene[[gene]]$significantRegulators,drop=FALSE], output$ResultsPerGene[[gene]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[gene,'ncomp'])
+    pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
     #Create the weighting plots
     plot(pls@scoreMN[,axe1], pls@scoreMN[,axe2],
          main = "Scores",
@@ -1553,43 +1723,43 @@ plotscores<-function(output, gene,axe1=1,axe2=2){
 #' \code{summary.MORE} Function to be applied to MORE object.
 #' 
 #' @param object MORE object obtained from applying \link{more} function. 
-#' @param plot.more If TRUE top 10 global regulators are plotted against the genes they regulate. By default, FALSE.
+#' @param plot.more If TRUE top 10 global regulators are plotted against the target features they regulate. By default, FALSE.
 #' 
 #' @return Summary of more analysis.
 #' @export
 
 summary.MORE <-function(object, plot.more=FALSE){
   
-  cat('A model was computed for',length(object$ResultsPerGene), 'genes.' ,'\n')
-  cat(ifelse(is.null(object$GlobalSummary$GenesNoregulators),0,nrow(object$GlobalSummary$GenesNoregulators)), 'genes had no intial regulators.' ,'\n')
+  cat('A model was computed for',length(object$ResultsPerTargetF), 'target features.' ,'\n')
+  cat(ifelse(is.null(object$GlobalSummary$TargetFNOregu),0,nrow(object$GlobalSummary$TargetFNOregu)), 'target features had no intial regulators.' ,'\n')
   
-  if(object$arguments$method == 'glm'||object$arguments$method=='isgl'){
-    cat('For', ifelse(is.null(object$GlobalSummary$GenesNOmodel),0,length(object$GlobalSummary$GenesNOmodel)), 'genes, the final GLM model could not be obtained.','\n')
-    cat('Genes presented a mean of ',mean(na.omit(object$GlobalSummary$GoodnessOfFit[,'relReg'])),'relevant regulators.','\n')
+  if(object$arguments$method == 'MLR'||object$arguments$method=='ISGL'){
+    cat('For', ifelse(is.null(object$GlobalSummary$TargetFNOmodel),0,nrow(object$GlobalSummary$TargetFNOmodel)), 'target features, the final MLR model could not be obtained.','\n')
+    cat('Target features presented a mean of ',mean(na.omit(object$GlobalSummary$GoodnessOfFit[,'relReg'])),'relevant regulators.','\n')
     
-    #Top hub genes
-    relevant_regulators<-object$GlobalSummary$ReguPerGene[,c(grep('-Rel$',colnames(object$GlobalSummary$ReguPerGene))),drop=FALSE]
+    #Top hub target features
+    relevant_regulators<-object$GlobalSummary$ReguPerTargetF[,c(grep('-Rel$',colnames(object$GlobalSummary$ReguPerTargetF))),drop=FALSE]
     #globally
     
     s_rel_reg<-apply(relevant_regulators, 1, sum)
     
-    cat('These are the top 10 hub genes and the number of relevant regulators for each:\n')
+    cat('These are the top 10 hub target features and the number of relevant regulators for each:\n')
     print(s_rel_reg[rev(tail(order(s_rel_reg),10))])
     
     #Global regulators
     
-    m_rel_reg<-lapply(object$ResultsPerGene, function(x) x$relevantRegulators)
+    m_rel_reg<-lapply(object$ResultsPerTargetF, function(x) x$relevantRegulators)
     m_rel_reg <- unlist(m_rel_reg)
     
     ## Count occurrences
     mrel_vector <- table(m_rel_reg)
-    #Ask to regulate at least 10 genes
+    #Ask to regulate at least 10 target features
     mrel_vector<-mrel_vector[mrel_vector>10]
     if(length(mrel_vector!=0)){
-      cat('These are the top 10 global regulators and the number of genes that they regulate:\n')
+      cat('These are the top 10 global regulators and the number of target features that they regulate:\n')
       print(mrel_vector[rev(tail(order(mrel_vector),10))])
     } else{
-      cat('There were not global regulators (regulators that regulate more than 10 genes).')
+      cat('There were not global regulators (regulators that regulate more than 10 target features).')
     }
     
     
@@ -1597,38 +1767,38 @@ summary.MORE <-function(object, plot.more=FALSE){
       mreg<-mrel_vector[rev(tail(order(mrel_vector),10))]
       for (i in 1:10) {
         par(mfrow=c(2,4))
-        plotGLM(object, gene = NULL, regulator = names(mreg)[i], plotPerOmic = FALSE ,order = FALSE, gene.col = 'skyblue', regu.col = 'tan1', verbose = FALSE)
+        plotMLR(object, targetF = NULL, regulator = names(mreg)[i], plotPerOmic = FALSE ,order = FALSE, targetF.col = 'skyblue', regu.col = 'tan1', verbose = FALSE)
       }
     }
   }
   else{
-    cat('Genes presented a mean of ',mean(na.omit(object$GlobalSummary$GoodnessOfFit[,'sigReg'])),'significant regulators.','\n')
+    cat('Target features presented a mean of ',mean(na.omit(object$GlobalSummary$GoodnessOfFit[,'sigReg'])),'significant regulators.','\n')
     
-    #Top hub genes
-    significant_regulators<-object$GlobalSummary$ReguPerGene[,c(grep('-Sig$',colnames(object$GlobalSummary$ReguPerGene))),drop=FALSE]
+    #Top hub target features
+    significant_regulators<-object$GlobalSummary$ReguPerTargetF[,c(grep('-Sig$',colnames(object$GlobalSummary$ReguPerTargetF))),drop=FALSE]
     #globally
     
     s_sig_reg<-apply(significant_regulators, 1, sum)
-    cat('These are the top 10 hub genes and the number of significant regulators for each:\n')
+    cat('These are the top 10 hub target features and the number of significant regulators for each:\n')
     print(s_sig_reg[tail(order(s_sig_reg),10)])
     
     #Global regulators
     
-    m_sig_reg<-lapply(object$ResultsPerGene, function(x) x$significantRegulators)
+    m_sig_reg<-lapply(object$ResultsPerTargetF, function(x) x$significantRegulators)
     m_sig_reg <- unlist(m_sig_reg)
     
     ## Count occurrences
     msig_vector <- table(m_sig_reg)
-    #Ask to regulate at least 10 genes
+    #Ask to regulate at least 10 target features
     msig_vector<-msig_vector[msig_vector>10]
-    cat('These are the top 10 global regulators and the number of genes that they regulate:\n')
+    cat('These are the top 10 global regulators and the number of target features that they regulate:\n')
     print(msig_vector[rev(tail(order(msig_vector),10))])
     
     if(plot.more){
       msig<-msig_vector[rev(tail(order(msig_vector),10))]
       for (i in 1:10) {
         par(mfrow=c(2,4))
-        plotPLS(object, gene = NULL, regulator = names(msig)[i], plotPerOmic = FALSE ,order = FALSE, gene.col = 'skyblue', regu.col = 'tan1', verbose = FALSE)
+        plotPLS(object, targetF = NULL, regulator = names(msig)[i], plotPerOmic = FALSE ,order = FALSE, targetF.col = 'skyblue', regu.col = 'tan1', verbose = FALSE)
         
       }
     }
@@ -1637,32 +1807,32 @@ summary.MORE <-function(object, plot.more=FALSE){
   
 }
 
-#' summary_plot
+#' summaryPlot
 #'
-#' \code{summary_plot} Function to be applied to MORE object and the object obtained from RegulationPerCondition.
+#' \code{summaryPlot} Function to be applied to MORE object and the object obtained from RegulationPerCondition.
 #' 
 #' @param output MORE object obtained from applying \link{more} function. 
-#' @param output_regpcond Object generated by the function \link{RegulationPerCondition} when applied to a \link{more} object. 
-#' @param by_genes If TRUE, the function plots the percentage of genes with significant regulators globally and per omic. If FALSE, it plots the percentage of significant regulations per omic. By default, TRUE.
+#' @param outputRegpcond Object generated by the function \link{RegulationPerCondition} when applied to a \link{more} object. 
+#' @param byTargetF If TRUE, the function plots the percentage of target features with significant regulators globally and per omic. If FALSE, it plots the percentage of significant regulations per omic. By default, TRUE.
 #' 
 #' @return Summary plot of the MORE analysis.
 #' @export 
 
 
-summary_plot<-function(output, output_regpcond, by_genes =TRUE){
+summaryPlot<-function(output, outputRegpcond, byTargetF =TRUE){
   
   #output should by a MORE object
-  #output_regpcond should by the output of calculating RegulationPerCondition to a MORE object
-  #by_genes by default TRUE calculates the percentage of genes with significant regulators globally and per omic. FALSE to calculate the percentage of significant regulations globally and per omic.
+  #outputRegpcond should by the output of calculating RegulationPerCondition to a MORE object
+  #byTargetF by default TRUE calculates the percentage of genes with significant regulators globally and per omic. FALSE to calculate the percentage of significant regulations globally and per omic.
   
-  if(by_genes){
+  if(byTargetF){
     #Calculate the vector with % of significant regulators by condition and globally
     
     ngroups = length(unique(output$arguments$groups))
-    omics = names(output$arguments$dataOmics)
-    totalgenes = length(output$ResultsPerGene)+ifelse(is.null(output$GlobalSummary$GenesNoregulators),0,length(output$GlobalSummary$GenesNoregulators))+ifelse(is.null(output$GlobalSummary$GenesNomodel),0,length(output$GlobalSummary$GenesNomodel))
+    omics = names(output$arguments$regulatoryData)
+    totaltargetFs = length(output$ResultsPerTargetF)+ifelse(is.null(output$GlobalSummary$TargetFNOregu),0,length(output$GlobalSummary$TargetFNOregu))+ifelse(is.null(output$GlobalSummary$TargetFNOmodel),0,length(output$GlobalSummary$TargetFNOmodel))
     
-    pos = grep('Group',colnames(output_regpcond))[1]
+    pos = grep('Group',colnames(outputRegpcond))[1]
     #Create all the counts needed globally and per groups
     
     cts = matrix(NA, nrow=(ngroups)+1,ncol=length(omics)+1)
@@ -1671,13 +1841,14 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
       #Create the global values
       for (j in 1:((length(omics))+1)){
         if (i==1 && j==1){
-          cts[i,j]= length(unique(output_regpcond$gene))
+          cts[i,j]= length(unique(outputRegpcond$targetF))
         }else if(i==1){
-          cts[i,j]= length(unique(output_regpcond[output_regpcond$omic==omics[j-1],]$gene))
+          cts[i,j]= length(unique(outputRegpcond[outputRegpcond$omic==omics[j-1],]$targetF))
         }else if(j==1){
-          cts[i,j] = length(unique(output_regpcond[output_regpcond[,pos+(i-2)]!=0,]$gene))
+          cts[i,j] = length(unique(outputRegpcond[outputRegpcond[,pos+(i-2)]!=0,]$targetF))
         }else{
-          cts[i,j] = length(intersect(unique(output_regpcond[output_regpcond[,pos+(i-2)]!=0,]$gene), unique(output_regpcond[output_regpcond$omic==omics[j-1],]$gene)))
+          sub_gr = outputRegpcond[outputRegpcond$omic==omics[j-1],]
+          cts[i,j] = length(unique(sub_gr[sub_gr[,pos+(i-2)]!=0,]$targetF))
         }
         
       }
@@ -1685,103 +1856,109 @@ summary_plot<-function(output, output_regpcond, by_genes =TRUE){
     
     #Convert to percentage
     
-    cts<-cts/totalgenes*100
+    cts<-cts/totaltargetFs*100
     
-    group_levels <- c('Global',  gsub('Group_','',colnames(output_regpcond)[pos:ncol(output_regpcond)]))
-    #Create a df with the percentage of genes with significant regulators by omic and condition
+    group_levels <- c('Global',  gsub('Group_','',colnames(outputRegpcond)[pos:ncol(outputRegpcond)]))
+    #Create a df with the percentage of targetFs with significant regulators by omic and condition
     df <- data.frame(Group=factor(rep(group_levels, times = length(omics) + 1), levels = group_levels),
-                     omic=rep(c('Any',names(output$arguments$dataOmics)),each = ngroups+1),
-                     genes=as.vector(cts))
+                     omic=rep(c('Any',names(output$arguments$regulatoryData)),each = ngroups+1),
+                     targetFs=as.vector(cts))
     
     num_unique <- ngroups+1
     color_palette <- colorbiostat(num_unique)
     custom_colors <- setNames(color_palette, unique(df$Group))
-    ggplot2::ggplot(data=df, aes(x=omic, y=genes, fill=Group)) +
+    ggplot2::ggplot(data=df, aes(x=omic, y=targetFs, fill=Group)) +
       geom_bar(stat="identity", position=position_dodge()) +
       theme_minimal()+
       scale_fill_manual(values = custom_colors)+ 
-      labs(x="Omic", y = "% genes with significant regulators") +
+      labs(x="", y = "% targetFs with significant regulators") + theme(axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
       theme(legend.text = element_text(size = 12),panel.grid = element_line(color = "black",linewidth = 0.5,linetype = 1)) 
     
   } else{
     #Calculate the vector with % of significant regulations by condition in each omic
     
     ngroups = length(unique(output$arguments$groups))
-    omics = names(output$arguments$dataOmics)
-    pos = grep('Group',colnames(output_regpcond))[1]
+    omics = names(output$arguments$regulatoryData)
+    pos = grep('Group',colnames(outputRegpcond))[1]
     #Create all the counts needed globally and per groups
     
     cts = matrix(NA, nrow=(ngroups),ncol=length(omics))
     
     total_reg_omic <- if (is.null(output$arguments$associations)) {
-      sapply(output$arguments$dataOmics, nrow)
+      sapply(output$arguments$regulatoryData, nrow)
     } else {
-      sapply(omics, function(x) length(intersect(rownames(output$arguments$dataOmics[[x]]) ,output$arguments$associations[[x]][,2])))
+      sapply(omics, function(x) {
+        if (!is.null(output$arguments$associations[[x]])) {
+          length(intersect(rownames(output$arguments$regulatoryData[[x]]), output$arguments$associations[[x]][,2]))
+        } else {
+          nrow(output$arguments$regulatoryData[[x]])
+        }
+      })
     }
     
     for (i in 1:ngroups){
       #Create the global values
       for (j in 1:length(omics)){
         
-        cts[i,j] = length(intersect(output_regpcond[output_regpcond[,pos+i-1]!=0,]$regulator,output_regpcond[output_regpcond$omic==omics[j],]$regulator))/total_reg_omic[j]*100
+        cts[i,j] = length(intersect(outputRegpcond[outputRegpcond[,pos+i-1]!=0,]$regulator,outputRegpcond[outputRegpcond$omic==omics[j],]$regulator))/total_reg_omic[j]*100
         
       }
     }
-    group_levels <- gsub('Group_','',colnames(output_regpcond)[pos:ncol(output_regpcond)])
-    #Create a df with the percentage of genes with significant regulators by omic and condition
+    group_levels <- gsub('Group_','',colnames(outputRegpcond)[pos:ncol(outputRegpcond)])
+    #Create a df with the percentage of target features with significant regulators by omic and condition
     df <- data.frame(Group=factor(rep(group_levels, times=length(omics)), levels = group_levels),
-                     omic=rep(names(output$arguments$dataOmics),each = ngroups),
-                     genes=as.vector(cts))
+                     omic=rep(names(output$arguments$regulatoryData),each = ngroups),
+                     targetFs=as.vector(cts))
     
     num_unique <- ngroups+1
     color_palette <- colorbiostat(num_unique)
     custom_colors <- setNames(color_palette[-1], unique(df$Group))
-    ggplot2::ggplot(data=df, aes(x=omic, y=genes, fill=Group)) +
+    ggplot2::ggplot(data=df, aes(x=omic, y=targetFs, fill=Group)) +
       geom_bar(stat="identity", position=position_dodge()) +
-      theme_minimal()+scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic,'regulators')) +
+      theme_minimal()+scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic,'associations')) +
       scale_fill_manual(values = custom_colors)+
-      scale_y_continuous(limits = c(0, max(df$genes) + 1)) +
-      labs(x="Omic", y = "% significant regulations") +
+      scale_y_continuous(limits = c(0, max(df$targetFs) + 1)) +
+      labs(x="", y = "% significant regulations") + theme(axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
       theme(legend.text = element_text(size = 12),panel.grid = element_line(color = "black",linewidth = 0.5,linetype = 1)) 
     
   }
   
 }
 
-getallreg <- function(x, gene) {
-  reg <- x[x[, 1] == gene, 2]
+getallreg <- function(x, targetF) {
+  reg <- x[x[, 1] == targetF, 2]
   return(as.character(reg))
 }
 
-#' globalreg_plot
+#' globalregPlot
 #'
-#' \code{globalreg_plot} Function to be applied to \link{RegulationInCondition} function output.
+#' \code{globalregPlot} Function to be applied to \link{RegulationInCondition} function output.
 #' 
-#' @param output_regincond Output object of running \link{RegulationInCondition} function.
-#' @param by_network If TRUE, information would be plotted on a network instead of a corrplot. By default, FALSE.
+#' @param outputRegincond Output object of running \link{RegulationInCondition} function.
+#' @param byNetwork If TRUE, information would be plotted on a network instead of a corrplot. By default, FALSE.
 #' 
-#' @return Graphical visualization between global regulators and genes in a specific condition.
+#' @return Graphical visualization between global regulators and target features in a specific condition.
 #' @export
 
-globalreg_plot<-function(output_regincond, by_network=FALSE){
+globalregPlot<-function(outputRegincond, byNetwork=FALSE){
   
-  #output_regincond: Output object of running RegulationInCondition function
-  #by_network: By faulta, FALSE. If TRUE plots the results in a network
+  #outputRegincond: Output object of running RegulationInCondition function
+  #byNetwork: By faulta, FALSE. If TRUE plots the results in a network
 
-  regulators<-output_regincond$GlobalRegulators
+  regulators<-outputRegincond$GlobalRegulators
   if (length(regulators)==0){
     stop("ERROR:No global regulator was identified for this condition")
   }
-  if (by_network){
+  if (byNetwork){
     
     #Take group column in RegulationPerCondition
-    df<-output_regincond$RegulationInCondition[grepl(paste(regulators, collapse = "|"), output_regincond$RegulationInCondition$regulator),]
+    df<-outputRegincond$RegulationInCondition[grepl(paste(regulators, collapse = "|"), outputRegincond$RegulationInCondition$regulator),]
     
     #Create the graph
     mygraph = igraph::graph_from_data_frame(df, directed=F)
     
     odf<-df[,c(2,3)]
-    odf<-rbind(odf, data.frame('regulator'=unique(df$gene),'omic'=rep('gene',length(unique(df$gene)))))
+    odf<-rbind(odf, data.frame('regulator'=unique(df$targetF),'omic'=rep('targetF',length(unique(df$targetF)))))
     odf<-unique(odf)
     rownames(odf)<-odf$regulator
     
@@ -1789,46 +1966,46 @@ globalreg_plot<-function(output_regincond, by_network=FALSE){
     mygraph<-igraph::set.edge.attribute(mygraph, 'sign', index = igraph::E(mygraph), value = df[,4])
     igraph::E(mygraph)$sign<-df[,4]
     
-    igraph::plot.igraph(mygraph,vertex.label.cex= 0.4, vertex.size = 4,vertex.color=as.factor(igraph::V(mygraph)$omic),edge.color = ifelse(igraph::E(mygraph)$sign >0, "blue", "red"), main='Gene - Global regulators network')
+    igraph::plot.igraph(mygraph,vertex.label.cex= 0.4, vertex.size = 4,vertex.color=as.factor(igraph::V(mygraph)$omic),edge.color = ifelse(igraph::E(mygraph)$sign >0, "blue", "red"), main='targetF - Global regulators network')
     legend("topright", legend = unique(igraph::V(mygraph)$omic), col = categorical_pal(length(unique(as.factor(igraph::V(mygraph)$omic)))), pch = 16, cex = 1.5, bty = "n")
     
     
   }else{
     
-    # Identify the genes they regulate
-    genes<-unique(output_regincond$RegulationInCondition[grepl(paste(regulators, collapse = "|"), output_regincond$RegulationInCondition$regulator),1])
+    # Identify the target features they regulate
+    targetFs<-unique(outputRegincond$RegulationInCondition[grepl(paste(regulators, collapse = "|"), outputRegincond$RegulationInCondition$regulator),1])
     
     #Create the matrix 
-    gen_reg<-matrix(0, nrow= length(genes),ncol=length(regulators))
+    gen_reg<-matrix(0, nrow= length(targetFs),ncol=length(regulators))
     colnames(gen_reg)=regulators
-    rownames(gen_reg)=genes
+    rownames(gen_reg)=targetFs
     
     for ( i in 1:nrow(gen_reg)){
-      #Get all the potential regulators of the gene
-      potential_regulator <- unlist(sapply(output_regincond$arguments$associations, function(x) getallreg(x,genes[i])),use.names = FALSE)
+      #Get all the potential regulators of the target feature
+      potential_regulator <- unlist(sapply(outputRegincond$arguments$associations, function(x) getallreg(x,targetFs[i])),use.names = FALSE)
       
       #Use NA for any potential regulator
       gen_reg[i,intersect(potential_regulator,regulators)]<-NA
       for ( j in 1:ncol(gen_reg)){
-        if ( length(intersect(which(output_regincond$RegulationInCondition$gene==genes[i]),which(output_regincond$RegulationInCondition$regulator==regulators[j])) )!=0){
-          gen_reg[i,j] = output_regincond$RegulationInCondition[intersect(which(output_regincond$RegulationInCondition$gene==genes[i]),which(output_regincond$RegulationInCondition$regulator==regulators[j])),4]
+        if ( length(intersect(which(outputRegincond$RegulationInCondition$targetF==targetFs[i]),which(outputRegincond$RegulationInCondition$regulator==regulators[j])) )!=0){
+          gen_reg[i,j] = outputRegincond$RegulationInCondition[intersect(which(outputRegincond$RegulationInCondition$targetF==targetFs[i]),which(outputRegincond$RegulationInCondition$regulator==regulators[j])),4]
         }
       }
     }
     
-    df<-data.frame(genes=rep(rownames(gen_reg), times=ncol(gen_reg)),
+    df<-data.frame(targetFs=rep(rownames(gen_reg), times=ncol(gen_reg)),
                    regulators=rep(colnames(gen_reg),each = nrow(gen_reg)),
                    value=as.vector(gen_reg),
                    color= ifelse(as.vector(gen_reg)>0, '#5577FF',ifelse(as.vector(gen_reg)<0, '#FF7755','#FFFFFF')))
     df$color[is.na(df$color)] <- '#aaaaaa'
     
-    ggplot2::ggplot(data = df, aes(x = regulators, y = genes, fill = color)) +
+    ggplot2::ggplot(data = df, aes(x = regulators, y = targetFs, fill = color)) +
       geom_tile(color = "black",lwd = 0.5,  linetype = 1) +
       scale_fill_manual(values = c("#5577FF", "#aaaaaa", "#FF7755",  "#FFFFFF"), 
                         name = "Legend",
                         labels = c('Activator','Potential','Repressor','Not potential')) +
-      labs(title = paste0("Gene - Global Regulators \n correlation plot in ",colnames(output_regincond$RegulationInCondition)[4]," condition  \n"), 
-           x = "Global regulators", y = "Genes") +
+      labs(title = paste0("targetF - Global Regulators \n correlation plot in ",colnames(outputRegincond$RegulationInCondition)[4]," condition  \n"), 
+           x = "Global regulators", y = "targetFs") +
       theme(plot.title = element_text(hjust = 0.5, colour = "black"), 
             axis.title.x = element_text(face="bold", colour="black", size = 8),
             axis.title.y = element_text(face="bold", colour="black", size = 8),
@@ -1842,21 +2019,24 @@ globalreg_plot<-function(output_regincond, by_network=FALSE){
 
 ## Network creation -------
 
-#' network_more
+
+#' networkMORE
 #'
-#' \code{network_more} Function to be applied to RegulationPerConidtion function output.
+#' \code{networkMORE} Function to be applied to RegulationPerConidtion function output.
 #' 
-#' @param output_regpcond Output object of RegulationPerCondition applied to MORE main function.
+#' @param outputRegpcond Output object of RegulationPerCondition applied to MORE main function.
 #' @param cytoscape TRUE for plotting the network in Cytoscape. FALSE to plot the network in R. 
-#' @param group1 Name of the group to take as reference in the differential network creation. It also can be used for creating networks of a specific group.
-#' @param group2 Name of the group to compare to the reference in the differential network creation. 
-#' @param pc Percentile to consider to plot the most affecting regulators into the target omic. It must be a value comprissed between 0 and 1. Default 0.
+#' @param group1 Name of the group to take as reference in the differential network creation. It also can be used for creating networks of a specific group. If it is not provided the networks of all conditions will be plotted. By default, NULL.
+#' @param group2 Name of the group to compare to the reference in the differential network creation. By default, NULL.
+#' @param pc Percentile to consider to plot the most affecting regulators into the target omic. It must be a value comprissed between 0 and 1. By default, 0.
+#' @param pathway If provided, the function will print the regulatory network involved in the specified pathway instead of the entire regulatory network. By default, NULL.
+#' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
 #' @param save If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.
 #' @return Plot of the network induced from more.
 #' @export
 
 
-network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group2 = NULL, pc = 0 ,save=FALSE) {
+networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 = NULL, pc = 0, pathway= NULL, annotation = NULL, save=FALSE) {
   
   create_graph <- function(df,pc) {
     
@@ -1868,11 +2048,11 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
     df = df[which(abs(df[,4])>qc),,drop=FALSE]
     
     #Data.frame of that network
-    nodes = data.frame(id = c(unique(df[,'gene']),unique(df[,'regulator'])),
-                       omic = c(rep('gene',length(unique(df[,'gene']))),unique(df[,c('regulator','omic')])[,2]))
+    nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
+                       omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
     
     #Save only four digits as it cannot be loaded greater in Cytoscape
-    interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
+    interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
                               coef = round(df[,4],digits = 5), sign = ifelse(df[,4]>0,'p','n'))
     
     ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
@@ -1891,16 +2071,16 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
     RCy3::setNodeColorMapping('omic', table.column.values = omic_c ,colors = color_palette, mapping.type='d')
     
     nshaps <-setdiff(RCy3::getNodeShapes(), c("TRIANGLE", "DIAMOND","RECTANGLE"))[1:num_unique]
-    if('TF'%in% omic_c){
-      i=grep('TF', omic_c)
+    if(any(grepl("tf", omic_c, ignore.case = TRUE))){
+      i=grep('tf', omic_c, ignore.case = TRUE)
       nshaps[i]<-'TRIANGLE'
     }
-    if('miRNA'%in% omic_c){
-      i=grep('miRNA', omic_c)
+    if(any(grepl("mirna", omic_c, ignore.case = TRUE))){
+      i=grep('mirna', omic_c, ignore.case = TRUE)
       nshaps[i]<-'DIAMOND'
     }
-    if('gene'%in% omic_c){
-      i=grep('gene', omic_c)
+    if('targetF'%in% omic_c){
+      i=grep('targetF', omic_c)
       nshaps[i]<-'RECTANGLE'
     }
     RCy3::setNodeShapeMapping('omic', table.column.values = omic_c, shapes = nshaps )
@@ -1929,38 +2109,45 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
     return(df)
   }
   
-  if (cytoscape) {
+  if(!is.null(pathway)){
+    if(is.null(annotation)){stop('No annotation matrix was provided')}
     
+    targetFs=annotation[which(annotation[,3] == pathway),1]
+    if(length(targetFs)==0){stop('No target feature was considered in that pathway')}
+    outputRegpcond = outputRegpcond[c(outputRegpcond$targetF %in% targetFs),,drop=FALSE]
+  }
+  
+  if (cytoscape) {
     if (is.null(group1) && is.null(group2)) {
       
-      ngroups <- grep('Group', colnames(output_regpcond))
+      ngroups <- grep('Group', colnames(outputRegpcond))
       #Create as many networks as groups
       for (i in 1:length(ngroups)) {
         
-        df = output_regpcond[, c(1, 2, 3, ngroups[i])]
+        df = outputRegpcond[, c(1, 2, 3, ngroups[i])]
         
         ig = create_graph(df,pc)
         if(i == 1){
-          create_network(ig, colnames(output_regpcond)[ngroups[i]],diff = FALSE)
+          create_network(ig, colnames(outputRegpcond)[ngroups[i]],diff = FALSE)
         }  else{
-          RCy3::createNetworkFromIgraph(ig, colnames(output_regpcond)[ngroups[i]])
+          RCy3::createNetworkFromIgraph(ig, colnames(outputRegpcond)[ngroups[i]])
         }
         
       }
       
     } else if (is.null(group2)){
-      ngroup <- grep(group1, colnames(output_regpcond))
-      df = output_regpcond[, c(1, 2, 3, ngroup)]
+      ngroup <- grep(group1, colnames(outputRegpcond))
+      df = outputRegpcond[, c(1, 2, 3, ngroup)]
       ig = create_graph(df,pc)
-      create_network(ig, colnames(output_regpcond)[ngroup],diff = FALSE)
+      create_network(ig, colnames(outputRegpcond)[ngroup],diff = FALSE)
     } else {
       #Look for the groups to consider
-      gr1 <- grep(group1, colnames(output_regpcond))
-      gr2 <- grep(group2, colnames(output_regpcond))
+      gr1 <- grep(group1, colnames(outputRegpcond))
+      gr2 <- grep(group2, colnames(outputRegpcond))
       
       if (length(gr1) != 1 || length(gr2) != 1 || gr1 == gr2){stop("ERROR: group1 and group2 should be different names of groups to compare")}
       #Create the differential coefficient and the indicator of sign change
-      df <- output_regpcond[, c(1,2,3,gr1,gr2)]
+      df <- outputRegpcond[, c(1,2,3,gr1,gr2)]
       df[, 6] = df[, 5] - df[, 4]
       #Remove rows with same effect
       df = df[df[,6] != 0, ]
@@ -1971,30 +2158,30 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       df = DifLineType(df)
       
       #Data.frame of that network
-      nodes = data.frame(id = c(unique(df[,'gene']),unique(df[,'regulator'])),
-                         omic = c(rep('gene',length(unique(df[,'gene']))),unique(df[,c('regulator','omic')])[,2]))
+      nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
+                         omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
       
-      interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
+      interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
                                 sign = df[,8], line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
       
-      create_network(ig, paste0(colnames(output_regpcond)[gr2], '-', colnames(output_regpcond)[gr1]) ,diff = TRUE)
+      create_network(ig, paste0(colnames(outputRegpcond)[gr2], '-', colnames(outputRegpcond)[gr1]) ,diff = TRUE)
     }
     
   } else {
     
     if (is.null(group1) && is.null(group2)) {
       
-      ngroups <- grep('Group', colnames(output_regpcond))
+      ngroups <- grep('Group', colnames(outputRegpcond))
       #Create as many networks as groups
       for (i in 1:length(ngroups)) {
         #Data.frame of that network
-        df = output_regpcond[, c(1, 2, 3, ngroups[i])]
+        df = outputRegpcond[, c(1, 2, 3, ngroups[i])]
         ig = create_graph(df,pc)
         
         if(save){
-          igraph::write_graph(ig, format = 'gml', file = paste0(colnames(output_regpcond)[ngroups[i]], '.gml'))
+          igraph::write_graph(ig, format = 'gml', file = paste0(colnames(outputRegpcond)[ngroups[i]], '.gml'))
         } else{
           igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
                               vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
@@ -2004,11 +2191,11 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       }
       
     } else if(is.null(group2)){
-      ngroup <- grep(group1, colnames(output_regpcond))
-      df = output_regpcond[, c(1, 2, 3, ngroup)]
+      ngroup <- grep(group1, colnames(outputRegpcond))
+      df = outputRegpcond[, c(1, 2, 3, ngroup)]
       ig = create_graph(df,pc)
       if(save){
-        igraph::write_graph(ig, format = 'gml', file = paste0(colnames(output_regpcond)[ngroup], '.gml'))
+        igraph::write_graph(ig, format = 'gml', file = paste0(colnames(outputRegpcond)[ngroup], '.gml'))
       } else{
         igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
@@ -2016,12 +2203,12 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       }
       
     } else {
-      gr1 <- grep(group1, colnames(output_regpcond))
-      gr2 <- grep(group2, colnames(output_regpcond))
+      gr1 <- grep(group1, colnames(outputRegpcond))
+      gr2 <- grep(group2, colnames(outputRegpcond))
       
       if (length(gr1) != 1 || length(gr2) != 1 || gr1 == gr2){stop("ERROR: group1 and group2 should be different names of groups to compare")}
       #Create the differential coefficient and the indicator of sign change
-      df <- output_regpcond[, c(1,2,3,gr2,gr1)]
+      df <- outputRegpcond[, c(1,2,3,gr2,gr1)]
       df[, 6] = df[, 4] - df[, 5]
       #Remove rows with same effect
       df = df[df[,6] != 0, ]
@@ -2032,16 +2219,16 @@ network_more <- function(output_regpcond, cytoscape = TRUE, group1 = NULL, group
       df = DifLineType(df)
       
       #Data.frame of that network
-      nodes = data.frame(id = c(unique(df[,'gene']),unique(df[,'regulator'])),
-                         omic = c(rep('gene',length(unique(df[,'gene']))),unique(df[,c('regulator','omic')])[,2]))
+      nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
+                         omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
       
-      interactions = data.frame(from = df[,'gene'], to = df[,'regulator'],
+      interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
                                 sign = df[,8], line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
       
       if(save){
-        igraph::write_graph(ig, format = 'gml', file = paste0(colnames(output_regpcond)[gr2],'-',colnames(output_regpcond)[gr1], '.gml'))
+        igraph::write_graph(ig, format = 'gml', file = paste0(colnames(outputRegpcond)[gr2],'-',colnames(outputRegpcond)[gr1], '.gml'))
       } else{
         igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
@@ -2080,13 +2267,13 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 }
 
 
-#' ORA_more
+#' oraMORE
 #'
-#' \code{ORA_more} Function to be applied to RegulationInCondition function output.
+#' \code{oraMORE} Function to be applied to RegulationInCondition function output.
 #' 
 #' @param output Output object of running more
-#' @param output_globregincond Output object of running RegulationInCondition function
-#' @param annotation Annotation matrix with genes in the first column, GO terms in the second 
+#' @param outputRegincond Output object of running RegulationInCondition function
+#' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third
 #' @param alpha The adjusted pvalue cutoff to consider
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
 #' @param parallel parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter.
@@ -2094,16 +2281,16 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' @return Plot of the network induced from more.
 #' @export
 
-ORA_more = function(output, output_globregincond, annotation, alpha = 0.05,
+oraMORE = function(output, outputRegincond, annotation, alpha = 0.05,
                     p.adjust.method = "fdr", parallel = FALSE) {
   
   # output: Output object of running more function 
-  # output_globregincond: Output object of running RegulationInCondition function
-  # annotation: Annotation matrix with genes in the first column, GO terms in the second and a description in the third
+  # outputRegincond: Output object of running RegulationInCondition function
+  # annotation: Annotation matrix with target features in the first column, GO terms in the second and a description in the third
   
   #Take the GlobalRegulators to which we want to apply the object and against which we test it
-  regulators = output_globregincond$GlobalRegulators
-  reference = rownames(output$arguments$GeneExpression)
+  regulators = outputRegincond$GlobalRegulators
+  reference = rownames(output$arguments$targetData)
   
   #Take only the ones that were DE
   annotation = annotation[annotation[,1] %in% reference,]
@@ -2127,11 +2314,11 @@ ORA_more = function(output, output_globregincond, annotation, alpha = 0.05,
       }
     }
     myresults <- furrr::future_map(1:length(regulators),
-                                   ~ORA.i(regulators[.],output_globregincond, reference, annotation, p.adjust.method, annotDescr,alpha),
+                                   ~ORA.i(regulators[.],outputRegincond, reference, annotation, p.adjust.method, annotDescr,alpha),
                                    .progress = TRUE )
   } else{
     myresults <- purrr::map(1:length(regulators),
-                            ~ORA.i(regulators[.],output_globregincond, reference, annotation, p.adjust.method, annotDescr,alpha),
+                            ~ORA.i(regulators[.],outputRegincond, reference, annotation, p.adjust.method, annotDescr,alpha),
                             .progress = TRUE )
   }
   future::plan('sequential')
@@ -2140,9 +2327,9 @@ ORA_more = function(output, output_globregincond, annotation, alpha = 0.05,
 }
 
 
-ORA.i = function(regulator, output_globregincond, reference, annotation, p.adjust.method, annotDescr,alpha){
+ORA.i = function(regulator, outputRegincond, reference, annotation, p.adjust.method, annotDescr,alpha){
   
-  test = unique(as.character(output_globregincond$RegulationInCondition[which(output_globregincond$RegulationInCondition[,"regulator"] == regulator),"gene"]))
+  test = unique(as.character(outputRegincond$RegulationInCondition[which(outputRegincond$RegulationInCondition[,"regulator"] == regulator),"targetF"]))
   notTest = setdiff(reference, test)
   resuRegu = ReguEnrich1regu(test, notTest, annotation, p.adjust.method = p.adjust.method)
   resuRegu = resuRegu[which(resuRegu$adjPval < alpha),]
@@ -2160,33 +2347,33 @@ ORA.i = function(regulator, output_globregincond, reference, annotation, p.adjus
 
 library(clusterProfiler)
 
-#' GSEA_more
+#' gseaMORE
 #'
-#' \code{GSEA_more} Function to be applied to RegulationInCondition function output.
+#' \code{gseaMORE} Function to be applied to RegulationInCondition function output.
 #' 
-#' @param output_globregincond Output object of running RegulationInCondition function
-#' @param output_globregincond2 Output object of running RegulationInCondition function for other group different to the previous. By default, NULL.
-#' @param annotation Annotation matrix with genes in the first column, GO terms in the second 
+#' @param outputRegincond Output object of running RegulationInCondition function
+#' @param outputRegincond2 Output object of running RegulationInCondition function for other group different to the previous. By default, NULL.
+#' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third
 #' @param alpha The adjusted pvalue cutoff to consider
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
 #' 
 #' @return Plot of the network induced from more.
 #' @export
 
-GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotation, alpha = 0.05,
+gseaMORE<-function(outputRegincond, outputRegincond2 = NULL, annotation, alpha = 0.05,
                     p.adjust.method = "fdr"){
   
-  #output_globregincond: Output object of running RegulationInCondition
-  #output_globregincond2: Output object of running RegulationInCondition for other group to which compare the reference. By default, NULL.
-  #annotation: Annotation matrix with genes in the first column, GO terms in the second and GO term description in the third
+  #outputRegincond: Output object of running RegulationInCondition
+  #outputRegincond2: Output object of running RegulationInCondition for other group to which compare the reference. By default, NULL.
+  #annotation: Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third
   #alpha: The adjusted pvalue cutoff to consider
   #p.adjust.method: One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
   term2gene_bp<-annotation[,c(2,1)]
   term2name_bp <- unique(annotation[,c(2,3)])
-  if(is.null(output_globregincond2)){
-    #Store the genes in decreasing order
+  if(is.null(outputRegincond2)){
+    #Store the target features in decreasing order
 
-    geneList<-table(output_globregincond$RegulationInCondition$gene)
+    geneList<-table(outputRegincond$RegulationInCondition$targetF)
     geneList = sort(geneList, decreasing = TRUE)
     
     selected_genes <- names(geneList)
@@ -2198,9 +2385,9 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     
   } else{
     
-    geneList<-as.data.frame(table(output_globregincond$RegulationInCondition$gene))
+    geneList<-as.data.frame(table(outputRegincond$RegulationInCondition$targetF))
     
-    geneList2<-as.data.frame(table(output_globregincond2$RegulationInCondition$gene))
+    geneList2<-as.data.frame(table(outputRegincond2$RegulationInCondition$targetF))
     
     #Create a data frame 
     merged_df = merge(geneList, geneList2, by = 'Var1', all = TRUE)
@@ -2214,7 +2401,7 @@ GSEA_more<-function(output_globregincond, output_globregincond2 = NULL, annotati
     geneList <- sort(geneList, decreasing = TRUE)
     
     y <- clusterProfiler::GSEA(geneList = geneList, TERM2GENE = term2gene_bp, TERM2NAME = term2name_bp , pvalueCutoff = alpha, pAdjustMethod = p.adjust.method)
-    clusterProfiler::dotplot(y, split = '.sign') + facet_grid(.~.sign, labeller = as_labeller(c(activated = gsub('Group_','',colnames(output_globregincond2$RegulationInCondition)[4]), suppressed = gsub('Group_','',colnames(output_globregincond$RegulationInCondition)[4]))))
+    clusterProfiler::dotplot(y, split = '.sign') + facet_grid(.~.sign, labeller = as_labeller(c(activated = gsub('Group_','',colnames(outputRegincond2$RegulationInCondition)[4]), suppressed = gsub('Group_','',colnames(outputRegincond$RegulationInCondition)[4]))))
     
   }
   

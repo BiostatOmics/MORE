@@ -1,15 +1,15 @@
 #' @import ggplot2
 
 biostat_colors <- c(`green` = "#3bdfa2",
-                   `red` = "#d11d56",
-                   `yellow` = "#d0ef3f",
-                   `purple` = "#7332a7",
-                   `violet` = "#d6b0e9",
-                   `blue` = "#BEFEFF",
-                   `b_dgreen` = "#126D6D",
-                   `b_lgreen` = "#6CD0D0",
-                   `b_yellow`="#FDDB73",
-                   `b_orange` = "#FFB000")
+                    `red` = "#d11d56",
+                    `yellow` = "#F7FB7B",
+                    `purple` = "#7332a7",
+                    `violet` = "#d6b0e9",
+                    `blue` = "#657FCC",
+                    `b_dgreen` = "#126D6D",
+                    `b_lgreen` = "#6CD0D0",
+                    `b_yellow`="#FDDB73",
+                    `b_orange` = "#FFB000")
 
 #' Function to extract biostat colors as hex codes
 #'

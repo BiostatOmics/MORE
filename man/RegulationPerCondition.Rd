@@ -10,7 +10,7 @@ RegulationPerCondition(output)
 \item{output}{Output object of MORE main function.}
 }
 \value{
-Summary table containing all the relevant/significant regulators. Moreover, it provides the regression coefficient that relates the gene and the regulator for each experimental condition after testing if this coefficient is relevant/significant or not.
+Summary table containing all the relevant/significant regulators. Moreover, it provides the regression coefficient that relates the targetF and the regulator for each experimental condition after testing if this coefficient is relevant/significant or not.
 }
 \description{
 \code{RegulationPerCondition} Function to be applied to \link{more} main function output.

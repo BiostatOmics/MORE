@@ -1,5 +1,5 @@
 # MORE
-MORE (Multi-Omics REgulation) is an R package for the application of Partial Least Squares (PLS) or Generalized Linear Models (GLM) with Elastic Net or Iterative Sparse Group Lasso (ISGL) regularizations to multi-omics data. The MORE method applies GLMs or PLS to model gene expression as a function of experimental variables, such as diseases or treatments, and the potential regulators of a given gene. The aim is to obtain specific candidate regulators for the biological system under study.
+MORE (Multi-Omics REgulation) is an R package for the application of Partial Least Squares (PLS) or Multiple Linear Regression (MLR) models with Elastic Net or Iterative Sparse Group Lasso (ISGL) regularizations to multi-omics data. The MORE method applies MLRs or PLS to model a target omic expression as a function of experimental variables, such as diseases or treatments, and the potential regulators of that given target feature. The aim is to obtain specific candidate regulators for the biological system under study.
 
 
 ## Installing
@@ -18,7 +18,6 @@ Before installation, it might be necessary to install the required dependencies:
 * car
 * ltm
 * ropls
-* stringr
 
 ## Usage
 

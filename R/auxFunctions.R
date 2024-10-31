@@ -7,13 +7,13 @@
 
 # Removing regulators with low variation ----------------------------------
 
-LowVariationRegu = function(min.variation, data.omics, ExpGroups, associations, Allgenes, omic.type, clinic.type) {
+LowVariationRegu = function(min.variation, data.omics, ExpGroups, associations, AlltargetFs, omic.type, clinic.type) {
   
   if (all(is.na(min.variation))){
     
     for (ov in names(associations)){
       if(!is.null(associations[[ov]])){
-        myreg=associations[[ov]][associations[[ov]][,1] %in% Allgenes,2] # removing regulators not associated to our genes
+        myreg=associations[[ov]][associations[[ov]][,1] %in% AlltargetFs,2] # removing regulators not associated to our targetFs
         data.omics[[ov]]=data.omics[[ov]][intersect(myreg, rownames(data.omics[[ov]])),] ## Reduced data.omics
         rm("myreg")
       }
@@ -37,7 +37,7 @@ LowVariationRegu = function(min.variation, data.omics, ExpGroups, associations, 
     # data.omicsMean reduced: without NA and LV
     data.omicsMean=LowVar$data
     
-    ## data.omics reduced: only mygenes and without NA and LV
+    ## data.omics reduced: only mytargetFs and without NA and LV
     for (ov in names(data.omics)[j:length(data.omics)]){
       data.omics[[ov]] = data.omics[[ov]][rownames(data.omicsMean[[ov]]),]
       # Remove regulators from associations that have been removed due to LowVariation
@@ -50,10 +50,10 @@ LowVariationRegu = function(min.variation, data.omics, ExpGroups, associations, 
     
     #### Low variation cutoff is set by the user
     
-    # removing regulators not associated to our genes only when there is associations matrix
+    # removing regulators not associated to our targetFs only when there is associations matrix
     for (ov in names(associations)){
       if(!is.null(associations[[ov]])){
-        myreg=associations[[ov]][associations[[ov]][,1] %in% Allgenes,2]
+        myreg=associations[[ov]][associations[[ov]][,1] %in% AlltargetFs,2]
         data.omics[[ov]]=data.omics[[ov]][intersect(myreg, rownames(data.omics[[ov]])),]
         rm("myreg")
       }
@@ -78,7 +78,7 @@ LowVariationRegu = function(min.variation, data.omics, ExpGroups, associations, 
     
     data.omicsMean=LowVar$data  ## data.omicsMean reduced
     
-    ## data.omics reduced: only mygenes and without NA and LV
+    ## data.omics reduced: only mytargetFs and without NA and LV
     for (ov in names(data.omics)[j:length(data.omics)]){
       data.omics[[ov]] = data.omics[[ov]][rownames(data.omicsMean[[ov]]),]
       # Remove regulators from associations that have been removed due to LowVariation
@@ -196,11 +196,11 @@ uniquePaste = function (x) {
 
 
 ## INPUT
-## gene: we are seeking information
-## associations: List containing as many elements as original association files between genes and each omic (association$miRNA, association$DNase, etc.)
+## targetF: we are seeking information
+## associations: List containing as many elements as original association files between targetFs and each omic (association$miRNA, association$DNase, etc.)
 ## data.omics: For removing regulators with no-information
 
-GetAllReg=function(gene, associations, data.omics){
+GetAllReg=function(targetF, associations, data.omics){
   
   Reg.matrix=NULL
   NrReg=NULL
@@ -216,23 +216,23 @@ GetAllReg=function(gene, associations, data.omics){
         myregulators=t(as.matrix(myregulators))
       }
       
-      Reg.matrix.temp=cbind(rep(gene,ov.nr),myregulators,ov,"")  ## Lo tengo que dejar igual que las otras omicas
+      Reg.matrix.temp=cbind(rep(targetF,ov.nr),myregulators,ov,"")  ## Lo tengo que dejar igual que las otras omicas
       NrReg.temp=ov.nr
-      colnames(Reg.matrix.temp)=c("gene","regulator","omic","area")
+      colnames(Reg.matrix.temp)=c("targetF","regulator","omic","area")
       Reg.matrix.temp = t(apply(Reg.matrix.temp,1, as.character))  ## adding this here to avoid factors
       Reg.matrix=rbind(Reg.matrix,Reg.matrix.temp)
-      colnames(Reg.matrix)=c("gene","regulator","omic","area")
+      colnames(Reg.matrix)=c("targetF","regulator","omic","area")
       NrReg=c(NrReg, NrReg.temp)
       
     } else{
       
-      colnames(associations[[ov]])[1]="gene"
+      colnames(associations[[ov]])[1]="targetF"
       
       ## Regulator with area
       
       if(ncol(associations[[ov]])>2){
         
-        myregulators=associations[[ov]][associations[[ov]]$gene==gene, ,drop=FALSE] ## "regulator" with Area--> Matrix
+        myregulators=associations[[ov]][associations[[ov]]$targetF==targetF, ,drop=FALSE] ## "regulator" with Area--> Matrix
         
         if(nrow(myregulators)==0){
           ov.nr=nrow(myregulators) ## regulators nr per omic --> It could be 0
@@ -246,19 +246,19 @@ GetAllReg=function(gene, associations, data.omics){
           ov.nr=nrow(myregulators)
         }
         
-        Reg.matrix.temp = cbind(gene,myregulators,ov)
+        Reg.matrix.temp = cbind(targetF,myregulators,ov)
         Reg.matrix.temp = Reg.matrix.temp[,c(1,2,4,3),drop=FALSE] ## Dejo el mismo orden que tenia
-        colnames(Reg.matrix.temp)=c("gene","regulator","omic","area")
+        colnames(Reg.matrix.temp)=c("targetF","regulator","omic","area")
         NrReg.temp=ov.nr
         Reg.matrix=rbind(Reg.matrix,Reg.matrix.temp)
-        colnames(Reg.matrix)=c("gene","regulator","omic","area")
+        colnames(Reg.matrix)=c("targetF","regulator","omic","area")
         NrReg=c(NrReg, NrReg.temp)
         
         ## Regulators without area
         
       } else {
         
-        myregulators=associations[[ov]][associations[[ov]]$gene==gene,2]
+        myregulators=associations[[ov]][associations[[ov]]$targetF==targetF,2]
         myregulators=unique(myregulators) ## Could it be repeated??
         ov.nr=length(myregulators) ## regulators nr per omic --> It could be 0
         
@@ -267,24 +267,24 @@ GetAllReg=function(gene, associations, data.omics){
           myregulators=t(as.matrix(myregulators))
         }
         
-        Reg.matrix.temp=cbind(gene,myregulators,ov,"")  ## Lo tengo que dejar igual que las otras omicas
+        Reg.matrix.temp=cbind(targetF,myregulators,ov,"")  ## Lo tengo que dejar igual que las otras omicas
         NrReg.temp=ov.nr
         Reg.matrix.temp = t(apply(Reg.matrix.temp,1, as.character))  ## adding this here to avoid factors
-        colnames(Reg.matrix.temp)=c("gene","regulator","omic","area")
+        colnames(Reg.matrix.temp)=c("targetF","regulator","omic","area")
         Reg.matrix=rbind(Reg.matrix,Reg.matrix.temp)
-        colnames(Reg.matrix)=c("gene","regulator","omic","area")
+        colnames(Reg.matrix)=c("targetF","regulator","omic","area")
         NrReg=c(NrReg, NrReg.temp)
       }
     }
   }
-  Results2=c(gene,NrReg)
+  Results2=c(targetF,NrReg)
   myomic=paste(myomic,"Ini",sep="-")
-  names(Results2)=c("gene",myomic)
+  names(Results2)=c("targetF",myomic)
   
   Results=vector("list", length=2)
   Results[[1]]=Reg.matrix
   Results[[2]]=Results2
-  names(Results)=c("Results","TableGene")
+  names(Results)=c("Results","TableTargetF")
   
   return(Results)
   
@@ -297,75 +297,76 @@ GetAllReg=function(gene, associations, data.omics){
 
 # Obtain which regulators have been removed and why -----------------------
 ## Input:
-## RetRegul.gene: Initial regulator matrix
+## RetRegul.targetF: Initial regulator matrix
 ## myregLV: regulators removed for low variability. List by omics
 ## myregNA: regulators removed for NA. List by omics
 
-RemovedRegulators = function(RetRegul.gene, myregLV, myregNA, data.omics){
+RemovedRegulators = function(RetRegul.targetF, myregLV, myregNA, data.omics){
   
   RegulatorsValue=NULL
-  RetRegul.geneNEW = NULL
+  RetRegul.targetFNEW = NULL
   
-  rownames(RetRegul.gene) = RetRegul.gene[,"regulator"]
-  myregini = RetRegul.gene[,"regulator"]  ## In our case, one regulator cannot belong to 2 omics
-  mygene = RetRegul.gene[1,"gene"]
+  rownames(RetRegul.targetF) = RetRegul.targetF[,"regulator"]
+  myregini = RetRegul.targetF[,"regulator"]  ## In our case, one regulator cannot belong to 2 omics
+  mytargetF = RetRegul.targetF[1,"targetF"]
   
-  for(ov in unique(RetRegul.gene[,"omic"])){
+  for(ov in unique(RetRegul.targetF[,"omic"])){
     
     ## remove regulators not in data.omics
-    regmodel = intersect(RetRegul.gene[,"regulator"], rownames(data.omics[[ov]]))
+    regmodel = intersect(RetRegul.targetF[,"regulator"], rownames(data.omics[[ov]]))
     RegulatorsValue = cbind(RegulatorsValue, t(data.omics[[ov]][regmodel,,drop=FALSE]))
-    RetRegul.geneNEW = rbind(RetRegul.geneNEW, RetRegul.gene[regmodel, , drop=FALSE])
+    RetRegul.targetFNEW = rbind(RetRegul.targetFNEW, RetRegul.targetF[regmodel, , drop=FALSE])
     
     ## NA
     
     if(length(intersect(myregini, myregNA[[ov]]))>0){
-      RetRegul.geneNEW = rbind(RetRegul.geneNEW, data.frame(gene = mygene, regulator = intersect(myregini, myregNA[[ov]]),
-                                                            omic = ov, area=RetRegul.gene[intersect(myregini, myregNA[[ov]]),"area"],
+      RetRegul.targetFNEW = rbind(RetRegul.targetFNEW, data.frame(targetF = mytargetF, regulator = intersect(myregini, myregNA[[ov]]),
+                                                            omic = ov, area=RetRegul.targetF[intersect(myregini, myregNA[[ov]]),"area"],
                                                             filter = "MissingValue", stringsAsFactors = FALSE))
     }
     
     ## LV
     
     if (length(intersect(myregini, myregLV[[ov]]))>0){
-      RetRegul.geneNEW = rbind(RetRegul.geneNEW, data.frame(gene = mygene, regulator = intersect(myregini, myregLV[[ov]]),
-                                                            omic = ov, area=RetRegul.gene[intersect(myregini, myregLV[[ov]]),"area"],
+      RetRegul.targetFNEW = rbind(RetRegul.targetFNEW, data.frame(targetF = mytargetF, regulator = intersect(myregini, myregLV[[ov]]),
+                                                            omic = ov, area=RetRegul.targetF[intersect(myregini, myregLV[[ov]]),"area"],
                                                             filter = "LowVariation", stringsAsFactors = FALSE))
     }
     
     
-    ## RetRegul.geneNEW=as.data.frame(RetRegul.geneNEW) ## Si es una matriz con una fila,al hacer el apply me lo convierte en vector
-    RetRegul.geneNEW=apply(RetRegul.geneNEW,c(1,2),as.character)
-    ##RetRegul.geneNEW[,"filter"] = as.character(RetRegul.geneNEW[,"filter"])
+    ## RetRegul.targetFNEW=as.data.frame(RetRegul.targetFNEW) ## Si es una matriz con una fila,al hacer el apply me lo convierte en vector
+    RetRegul.targetFNEW=apply(RetRegul.targetFNEW,c(1,2),as.character)
+    ##RetRegul.targetFNEW[,"filter"] = as.character(RetRegul.targetFNEW[,"filter"])
     
     
   }
   
-  return(list("SummaryPerGene" = RetRegul.geneNEW, "RegulatorMatrix" = RegulatorsValue))
+  return(list("SummaryPerTargetF" = RetRegul.targetFNEW, "RegulatorMatrix" = RegulatorsValue))
   
 }
 
 
 # Adding interations with regulators -------------------------------------
 
-filter_columns_by_regexp <- function(regupero, des.mat2, res) {
-  filtered_columns <- lapply(regupero, function(x) if (length(x) != 0) {
-    pat <- paste(x, collapse = "|")
-    logical_indices <- stringr::str_detect(colnames(des.mat2), stringr::regex(pat, ignore_case = TRUE))
-    colnames(des.mat2)[logical_indices]
-  })
-  return(filtered_columns)
-}
-
-RegulatorsInteractions = function (interactions.reg, reguValues, des.mat, GeneExpression, gene) {
+RegulatorsInteractions = function (interactions.reg, reguValues, reguInfo, des.mat,method='mlr') {
+  
+  #Create the empty list to save the data for each omic
+  des.mat1 = list()
+  #Take information of the omics
+  omics = unique(reguInfo[,'omic'])
+  #Divide regulators into omic groups
+  if (method=='mlr'){
+   #If it is MLR take care of not including those that are not representatives
+    reguInfo = reguInfo[which(reguInfo[,'filter']=='Model'),]
+  }
+  omic_list = split(reguInfo[,'regulator'], reguInfo[,'omic'])
+  
+  #Create des.mat2 as a list of matrices
+  des.mat1 = lapply(omic_list, function(x) reguValues[,x,drop=FALSE])
   
   # Adding regulators
-  if (is.null(des.mat)) {
-    des.mat2 = data.frame(reguValues, check.names = FALSE)
-    des.mat2 = cbind(t(GeneExpression[gene,]), des.mat2)
-    colnames(des.mat2)[1] = "response"
-  } else {
-    des.mat2 = data.frame(des.mat, reguValues, check.names = FALSE)
+  if (!is.null(des.mat)) {
+    
     ### WITH INTERACTIONS with regulators
     if (interactions.reg > 0) {
       expcond = colnames(des.mat)
@@ -378,66 +379,65 @@ RegulatorsInteractions = function (interactions.reg, reguValues, des.mat, GeneEx
         if (length(grep(":", expcond, fixed = TRUE)))  expcond = expcond[-grep(":", expcond, fixed = TRUE)]
       }
       
-      if(ncol(reguValues)<=5000){
+      for( om in names(des.mat1)){
         
-        fff = paste0("~ ",
-                     paste(sapply(colnames(reguValues),
-                                  function (x) paste(expcond, sprintf("`%s`", x), sep = ":")),
-                           collapse = "+"))
+        reguValues = des.mat1[[om]] 
         
-        fff = as.formula(fff)
-        inter.var = model.matrix(fff, des.mat2)[,-1, drop = FALSE]
-        colnames(inter.var) = strsplit(as.character(fff),"\\s*\\+\\s*")[-1][[1]]
-        des.mat2 = cbind(des.mat2, inter.var)
-        
-        des.mat2 = cbind(t(GeneExpression[gene,]), des.mat2)
-        colnames(des.mat2)[1] = "response"
-        
-        colnames(des.mat2) = gsub("\`", "", colnames(des.mat2))
-        
-      } else{
-        j = ceiling(ncol(reguValues)/250)
-        res.mat = des.mat2
-        
-        for (k in 1:j){
-          
-          cols_start = (250 * (k - 1)) + 1
-          cols_end = min(250 * k, ncol(reguValues))
+        if(ncol(reguValues)<=5000){
           
           fff = paste0("~ ",
-                       paste(sapply(colnames(reguValues[, cols_start:cols_end, drop = FALSE]),
-                                    function(x) paste(expcond, sprintf("`%s`", x), sep = ":")),
+                       paste(sapply(colnames(reguValues),
+                                    function (x) paste(expcond, sprintf("`%s`", x), sep = ":")),
                              collapse = "+"))
           
           fff = as.formula(fff)
+          des.mat2 = data.frame(des.mat, reguValues, check.names = FALSE)
           inter.var = model.matrix(fff, des.mat2)[,-1, drop = FALSE]
-          colnames(inter.var) = strsplit(as.character(fff), "\\s*\\+\\s*")[-1][[1]]
-          res.mat = cbind(res.mat, inter.var)
+          colnames(inter.var) = strsplit(as.character(fff),"\\s*\\+\\s*")[-1][[1]]
+          des.mat2 = cbind(des.mat2, inter.var)
+          
+          colnames(des.mat2) = gsub("\`", "", colnames(des.mat2))
+          
+        } else{
+          j = ceiling(ncol(reguValues)/250)
+          res.mat = data.frame(des.mat, reguValues, check.names = FALSE)
+          
+          for (k in 1:j){
+            
+            cols_start = (250 * (k - 1)) + 1
+            cols_end = min(250 * k, ncol(reguValues))
+            
+            fff = paste0("~ ",
+                         paste(sapply(colnames(reguValues[, cols_start:cols_end, drop = FALSE]),
+                                      function(x) paste(expcond, sprintf("`%s`", x), sep = ":")),
+                               collapse = "+"))
+            
+            fff = as.formula(fff)
+            inter.var = model.matrix(fff, des.mat2)[,-1, drop = FALSE]
+            colnames(inter.var) = strsplit(as.character(fff), "\\s*\\+\\s*")[-1][[1]]
+            res.mat = cbind(res.mat, inter.var)
+          }
+          
+          des.mat2 = res.mat
+          
         }
         
-        des.mat2 = res.mat
+        ## PUEDE OCURRIR QUE AL METER LAS INTERACCIONES TODA LA COLUMNA SEA 0. HAGO UN FILTRO PREVIO
+        sd.regulators = apply(des.mat2, 2, sd, na.rm=TRUE)
+        regulators0 = names(sd.regulators[sd.regulators==0])
+        if (length(regulators0)>0) des.mat2 = des.mat2[, setdiff(colnames(des.mat2), regulators0), drop=FALSE]
         
-        des.mat2 = cbind(t(GeneExpression[gene,]), des.mat2)
-        colnames(des.mat2)[1] = "response"
+        #Remove from des.mat2 variables related to the conditions
+        des.mat2 = des.mat2[,-c(1:length(expcond)),drop=FALSE]
         
-        colnames(des.mat2) = gsub("\`", "", colnames(des.mat2))
+        des.mat1[[om]] = des.mat2
         
       }
-      
-      ## PUEDE OCURRIR QUE AL METER LAS INTERACCIONES TODA LA COLUMNA SEA 0. HAGO UN FILTRO PREVIO
-      sd.regulators = apply(des.mat2[,-1,drop=FALSE], 2, sd, na.rm=TRUE)
-      regulators0 = names(sd.regulators[sd.regulators==0])
-      if (length(regulators0)>0) des.mat2 = des.mat2[, setdiff(colnames(des.mat2), regulators0), drop=FALSE]
-      
-    } else{  ### WITHOUT INTERACTIONS
-      
-      des.mat2 = cbind(t(GeneExpression[gene,]), des.mat2)
-      colnames(des.mat2)[1] = "response"
       
     }
     
   }
-  return(des.mat2)
+  return(des.mat1)
   
 }
 
@@ -449,7 +449,7 @@ ElasticNet = function (family2, des.mat2, epsilon, elasticnet) {
     
     if (length(elasticnet) ==1) { # Variable selection with fixed alpha
       
-      if (nrow(des.mat2) > 200) { mynfolds =  ceiling(nrow(des.mat2)/20) } else { mynfolds = nrow(des.mat2) }  # for CV
+      mynfolds = ifelse(nrow(des.mat2) < 50, nrow(des.mat2), ifelse(nrow(des.mat2) < 100, 5, ifelse(nrow(des.mat2) < 200, 7 , 10)))
       
       cvEN = glmnet::cv.glmnet(x = as.matrix(des.mat2[,-1]),
                        y = des.mat2[,1], 
@@ -481,7 +481,7 @@ ElasticNet = function (family2, des.mat2, epsilon, elasticnet) {
       #alpha parameter optimization
       
       alphas = elasticnet
-      if (nrow(des.mat2) > 200) { mynfolds =  ceiling(nrow(des.mat2)/20) } else { mynfolds = nrow(des.mat2) }  # for CV
+      mynfolds = ifelse(nrow(des.mat2) < 50, nrow(des.mat2), ifelse(nrow(des.mat2) < 100, 5, ifelse(nrow(des.mat2) < 200, 7 , 10))) # for CV
       
       #cv for lambda optimization for each alpha of the grid
       
@@ -532,7 +532,7 @@ ElasticNet = function (family2, des.mat2, epsilon, elasticnet) {
       #alpha parameter optimization
       
       alphas = seq(0,1,0.1)
-      if (nrow(des.mat2) > 200) { mynfolds =  ceiling(nrow(des.mat2)/20) } else { mynfolds = nrow(des.mat2) }  # for CV
+      mynfolds = ifelse(nrow(des.mat2) < 50, nrow(des.mat2), ifelse(nrow(des.mat2) < 100, 5, ifelse(nrow(des.mat2) < 200, 7 , 10))) # for CV
       
       #cv for lambda optimization for each alpha of the grid
       
@@ -588,115 +588,40 @@ modelcharac = function(fitted.glm,s, y, y.fitted){
   
   R2 = round(fitted.glm$glmnet.fit$dev.ratio[which(fitted.glm$glmnet.fit$lambda == s)],6)
   RMSE = round(sqrt(sum((y-y.fitted)^2)/n),6)
-  cvRMSE= abs(round(sqrt(sum((y-y.fitted)^2)/n)/mean(y),6))
+  NRMSE= round(RMSE/(max(y)-min(y)),6)
   
-  return(list('R.squared'=R2, 'RMSE' = RMSE ,'cvRMSE'=cvRMSE))
+  return(list('R.squared'=R2, 'RMSE' = RMSE ,'NRMSE'=NRMSE))
 }
 
 # Functions needed for PLS
 
-
-# Adding interations with regulators -------------------------------------
-
-RegulatorsInteractionsPLS2 = function (interactions.reg, reguValues, des.mat) {
-  
-  # Adding regulators
-  if (is.null(des.mat)) {
-    des.mat2 = data.frame(reguValues, check.names = FALSE)
-  } else {
-    des.mat2 = data.frame(des.mat, reguValues, check.names = FALSE)
-    ### WITH INTERACTIONS with regulators
-    if (interactions.reg > 0) {
-      expcond = colnames(des.mat)
-      
-      if (interactions.reg == 1) {  # Max order of interaction = 2 & Interactions with cont.var not allowed
-        if (length(grep(":", expcond, fixed = TRUE)))  expcond = expcond[-grep(":", expcond, fixed = TRUE)]
-      }
-      
-      if (interactions.reg == 2) { # Max order of interaction = 2
-        if (length(grep(":", expcond, fixed = TRUE)))  expcond = expcond[-grep(":", expcond, fixed = TRUE)]
-      }
-      
-      if(ncol(reguValues)<=5000){
-        
-        fff = paste0("~ ",
-                     paste(sapply(colnames(reguValues),
-                                  function (x) paste(expcond, sprintf("`%s`", x), sep = ":")),
-                           collapse = "+"))
-        
-        fff = as.formula(fff)
-        inter.var = model.matrix(fff, des.mat2)[,-1, drop = FALSE]
-        colnames(inter.var) = strsplit(as.character(fff),"\\s*\\+\\s*")[-1][[1]]
-        des.mat2 = cbind(des.mat2, inter.var)
-        
-        colnames(des.mat2) = gsub("\`", "", colnames(des.mat2))
-        
-      } else{
-        j = ceiling(ncol(reguValues)/250)
-        res.mat = des.mat2
-        
-        for (k in 1:j){
-          
-          cols_start = (250 * (k - 1)) + 1
-          cols_end = min(250 * k, ncol(reguValues))
-          
-          fff = paste0("~ ",
-                       paste(sapply(colnames(reguValues[, cols_start:cols_end, drop = FALSE]),
-                                    function(x) paste(expcond, sprintf("`%s`", x), sep = ":")),
-                             collapse = "+"))
-          
-          fff = as.formula(fff)
-          inter.var = model.matrix(fff, des.mat2)[,-1, drop = FALSE]
-          colnames(inter.var) = strsplit(as.character(fff), "\\s*\\+\\s*")[-1][[1]]
-          res.mat = cbind(res.mat, inter.var)
-        }
-        
-        des.mat2 = res.mat
-        
-      }
-      
-      ## PUEDE OCURRIR QUE AL METER LAS INTERACCIONES TODA LA COLUMNA SEA 0. HAGO UN FILTRO PREVIO
-      sd.regulators = apply(des.mat2, 2, sd, na.rm=TRUE)
-      regulators0 = names(sd.regulators[sd.regulators==0])
-      if (length(regulators0)>0) des.mat2 = des.mat2[, setdiff(colnames(des.mat2), regulators0), drop=FALSE]
-      
-    }
-    
-  }
-  return(des.mat2)
-  
-}
-
-
 # Scaling by blocks -------------------------------
 
-Scaling.type= function(reguVal, regu, scaletype){
-  res.mat <- NULL
-  regu = Filter(function(x) !is.null(x) && length(x) > 0, regu)
-  for (ov in names(regu)){
-    des.mat2 = as.data.frame(reguVal[, regu[[ov]],drop =FALSE])
-    
-    if(scaletype=='pareto'){
+Scaling.type= function(reguVal, scaletype){
+  res.mat = NULL
+  for (ov in names(reguVal)){
+    des.mat2 = reguVal[[ov]]
+    if(scaletype=='softBlock'){
       #Escalado tipo pareto
       des.mat2 = des.mat2 / (ncol(des.mat2)^(1/4))
     }
-    if(scaletype=='block'){
+    if(scaletype=='hardBlock'){
       #Cada bloque de variables tiene el mismo peso total en el modelo
       des.mat2 = des.mat2 / (ncol(des.mat2)^(1/2))
     }
     
     if (is.null(res.mat)) {
-      res.mat <- des.mat2
+      res.mat = des.mat2
     } else {
-      res.mat <- cbind(res.mat, des.mat2)
+      res.mat = cbind(res.mat, des.mat2)
     }
     
   }
   
   rownames(res.mat) = rownames(reguVal)
-  
   return(res.mat)
 }
+
 
 # p-values for PLS models ------------------------------------------------
 
