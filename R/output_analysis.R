@@ -72,13 +72,19 @@ ComparableBetas = function(myresults, output){
 #' \code{RegulationPerCondition} Function to be applied to \link{more} main function output.
 #' 
 #' @param output Output object of MORE main function.
+#' @param filterR2 Filters out genes with less R2 than the specified
 #' 
 #' @return Summary table containing all the relevant/significant regulators. Moreover, it provides the regression coefficient that relates the targetF and the regulator for each experimental condition after testing if this coefficient is relevant/significant or not.
 #'
 #' @export
 
 
-RegulationPerCondition = function(output){
+RegulationPerCondition = function(output, filterR2 = 0){
+  
+  #Filter to only those targetF of interest
+  filtered_targetF = rownames(output$GlobalSummary$GoodnessOfFit)[which(output$GlobalSummary$GoodnessOfFit[,1]>filterR2)]
+  output$ResultsPerTargetF = output$ResultsPerTargetF[names(output$ResultsPerTargetF) %in% filtered_targetF]
+  
   # output: results of the getMLR/getPLS function.
   method = output$arguments$method
   #Add a progressbar
