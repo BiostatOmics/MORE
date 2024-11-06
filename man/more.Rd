@@ -23,7 +23,8 @@ more(
   alfa = 0.05,
   vip = 0.8,
   method = "MLR",
-  parallel = FALSE
+  parallel = FALSE,
+  seed = 123
 )
 }
 \arguments{
@@ -112,6 +113,8 @@ By default, NULL.}
 By default, MLR.}
 
 \item{parallel}{If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter. Parallelization is only implemented for MLR with EN variable selection and PLS methods.}
+
+\item{seed}{Sets the seed to guaranty reproducibility of the results. By default, 123.}
 }
 \value{
 List containing the following elements:

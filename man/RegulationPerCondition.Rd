@@ -4,10 +4,12 @@
 \alias{RegulationPerCondition}
 \title{RegulationPerCondition}
 \usage{
-RegulationPerCondition(output)
+RegulationPerCondition(output, filterR2 = 0)
 }
 \arguments{
 \item{output}{Output object of MORE main function.}
+
+\item{filterR2}{Filters out genes with less R2 than the specified}
 }
 \value{
 Summary table containing all the relevant/significant regulators. Moreover, it provides the regression coefficient that relates the targetF and the regulator for each experimental condition after testing if this coefficient is relevant/significant or not.

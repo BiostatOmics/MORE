@@ -113,6 +113,7 @@ isBinclinic <-function(x){
 #' }
 #' By default, MLR.
 #' @param parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter. Parallelization is only implemented for MLR with EN variable selection and PLS methods.
+#' @param seed Sets the seed to guaranty reproducibility of the results. By default, 123.
 #' @return List containing the following elements:
 #' \itemize{
 #' \item ResultsPerTargetF : List with as many elements as features of the target omic in \code{\link{targetData}}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
@@ -158,7 +159,11 @@ more <-function(targetData,
                 alfa = 0.05,
                 vip = 0.8,
                 method  ='MLR',
-                parallel = FALSE){
+                parallel = FALSE,
+                seed = 123){
+  
+  #Set the seed for the reproducibility
+  set.seed(seed)
   
   if(is.null(omicType)){
     #Create internally omicType vector
