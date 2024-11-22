@@ -629,7 +629,7 @@ GetPLS = function(targetData,
         GlobalSummary$GoodnessOfFit[targetF,] = c(myPLS@modelDF[,'R2Y(cum)'][myPLS@summaryDF[,'pre']],
                                                myPLS@modelDF[,'Q2(cum)'][myPLS@summaryDF[,'pre']],
                                                myPLS@summaryDF[,'RMSEE'],
-                                               round(abs(myPLS@summaryDF[,'RMSEE']/mean(myPLS@suppLs$y)),6),
+                                               round(myPLS@summaryDF[,'RMSEE']/(max(myPLS@suppLs$y)-min(myPLS@suppLs$y)),6),
                                                round(myPLS@summaryDF[,'pre'],digits = 0),
                                                round(length(ResultsPerTargetF[[i]]$significantRegulators),digits = 0))
       }
