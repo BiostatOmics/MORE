@@ -9,7 +9,7 @@ RegulationPerCondition(output, filterR2 = 0)
 \arguments{
 \item{output}{Output object of MORE main function.}
 
-\item{filterR2}{Filters out genes with less R2 than the specified}
+\item{filterR2}{Filters out genes with less R2 than the specified. By default, 0.}
 }
 \value{
 Summary table containing all the relevant/significant regulators. Moreover, it provides the regression coefficient that relates the targetF and the regulator for each experimental condition after testing if this coefficient is relevant/significant or not.
