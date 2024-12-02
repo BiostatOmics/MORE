@@ -1690,32 +1690,45 @@ plotScores<-function(output, targetF,axe1=1,axe2=2){
     if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
     pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
     
+    num_unique <- length(unique(output$arguments$groups)) + 1
+    color_palette <- colorbiostat(num_unique)
+    custom_colors <- setNames(color_palette[-1], unique(output$arguments$groups))
+    
     plot(pls@scoreMN[,1], rep(0,length(output$arguments$groups)),
          main = "Scores",
          xlab = paste('t', axe1), ylab = paste('t', axe2),
-         pch = 18, col = output$arguments$groups)
+         pch = 18, col = custom_colors)
     
     # Asignamos las etiquetas
     text(pls@scoreMN[,1], rep(0,length(output$arguments$groups)),
          labels = row.names(pls@scoreMN),
          cex = 0.6, srt = 60, pos = 2, col = 'black')
     abline(h=0)
+    legend("topleft", legend = names(custom_colors),cex = 0.5,
+           pch = 18, col = custom_colors)
   } else{
     if(axe1> output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'] | axe2>output$GlobalSummary$GoodnessOfFit[targetF,'ncomp']) stop('Error: The model did not extracted originally that many components')
     if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
     #Create the PLS model only with the variables that resulted significant in the model
     pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
+    
+    num_unique <- length(unique(output$arguments$groups)) + 1
+    color_palette <- colorbiostat(num_unique)
+    custom_colors <- setNames(color_palette[-1], unique(output$arguments$groups))
+    
     #Create the weighting plots
     plot(pls@scoreMN[,axe1], pls@scoreMN[,axe2],
          main = "Scores",
          xlab = paste('t', axe1), ylab = paste('t', axe2),
-         pch = 18, col = output$arguments$groups)
+         pch = 18, col = custom_colors)
     
     # Asignamos las etiquetas
     text(pls@scoreMN[,axe1], pls@scoreMN[,axe2],
          labels = row.names(pls@scoreMN),
          cex = 0.6, pos = 4, col = "black")
     abline(h=0, v=0)
+    legend("topleft", legend = names(custom_colors),cex = 0.5,
+           pch = 18, col = custom_colors)
   }
   
 }
