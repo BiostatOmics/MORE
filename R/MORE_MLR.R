@@ -927,7 +927,7 @@ CollinearityFilter1 = function(data, reg.table, correlation = 0.8, omic.type,sca
           } else{
             repre = maxcorrelationed
           }
-          correlacionados = names(which(igraph::as_adj(mysubgraph)[,repre]>0))
+          correlacionados = names(which(igraph::as_adjacency_matrix(mysubgraph)[,repre]>0))
           regulators = colnames(data)
           
           regulators = setdiff(regulators, correlacionados)  # all regulators to keep
@@ -1166,7 +1166,7 @@ CollinearityFilter2 = function(data, reg.table, correlation = 0.8, omic.type,eps
             repre = maxcorrelationed
           }
           
-          correlacionados = names(which(igraph::as_adj(mysubgraph)[,repre]>0))
+          correlacionados = names(which(igraph::as_adjacency_matrix(mysubgraph)[,repre]>0))
           regulators = colnames(data)
           
           regulators = setdiff(regulators, correlacionados)  # all regulators to keep
