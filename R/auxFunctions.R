@@ -357,7 +357,7 @@ RegulatorsInteractions = function (interactions.reg, reguValues, reguInfo, des.m
   #Divide regulators into omic groups
   if (method=='mlr'){
    #If it is MLR take care of not including those that are not representatives
-    reguInfo = reguInfo[which(reguInfo[,'filter']=='Model'),]
+    reguInfo = reguInfo[which(reguInfo[,'filter']=='Model'),,drop=FALSE]
   }
   omic_list = split(reguInfo[,'regulator'], reguInfo[,'omic'])
   
