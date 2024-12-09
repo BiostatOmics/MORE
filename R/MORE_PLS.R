@@ -178,6 +178,13 @@ GetPLS = function(targetData,
     nameproblem<-!all(sapply(regulatoryData, function(x) length(intersect(colnames(x),colnames(targetData))==ncol(targetData))))
     if(nameproblem){
       cat('Warning. targetData and regulatoryData samples have not same names. We assume that they are ordered.\n')
+      #To avoid problems set in all the cases the same names according to the ones in targetData
+      Tnames = colnames(targetData)
+      regulatoryData = lapply(regulatoryData, function(x){
+        colnames(x) = Tnames
+        x
+      })
+      
     }else{
       orderproblem<-!all(sapply(regulatoryData, function(x) identical(colnames(x),colnames(targetData))))
       if(orderproblem){
@@ -189,6 +196,13 @@ GetPLS = function(targetData,
     nameproblem<-!all(c(sapply(regulatoryData, function(x) length(intersect(colnames(x),colnames(targetData)))==ncol(targetData)), length(intersect(rownames(condition),colnames(targetData)))==ncol(targetData)))
     if(nameproblem){
       cat('Warning. targetData, condition and regulatoryData samples have not same names. We assume that they are ordered.\n')
+      #To avoid problems set in all the cases the same names according to the ones in targetData
+      Tnames = colnames(targetData)
+      regulatoryData = lapply(regulatoryData, function(x){
+        colnames(x) = Tnames
+        x
+      })
+      rownames(condition) = Tnames 
     } else{
       orderproblem<-!all(c(sapply(regulatoryData, function(x) identical(colnames(x),colnames(targetData))), identical(colnames(targetData),rownames(condition))))
       if(orderproblem){
@@ -861,10 +875,12 @@ ResultsPerTargetF.i<-function(targetF,GlobalSummary,regulatoryData,associations,
           ResultsPerTargetF.i$coefficients = data.frame('coefficient' = myPLS@coefficientMN[sigvariables,], 'pvalue' = pval[sigvariables,,drop=FALSE])
           #Recalcular los parametros con las variables seleccionadas
           if(length(sigvariables)>0) {
-            myPLS = try(suppressWarnings(ropls::opls(des.mat2[,sigvariables,drop=FALSE], scale(des.mat2[,1],scale=scale,center=center), info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI = 0)),silent=TRUE)
-            if(class(myPLS)=='try-error' || length(myPLS@modelDF)==0){
-              myPLS = try(suppressWarnings(ropls::opls(des.mat2[,sigvariables,drop=FALSE], scale(des.mat2[,1],scale=scale,center=center), info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=1)), silent = TRUE)
-            }
+            fPLS = try(suppressWarnings(ropls::opls(des.mat2[,sigvariables,drop=FALSE], scale(des.mat2[,1],scale=scale,center=center), info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI = 0)),silent=TRUE)
+            if(class(fPLS)=='try-error' || length(fPLS@modelDF)==0){
+              fPLS = try(suppressWarnings(ropls::opls(des.mat2[,sigvariables,drop=FALSE], scale(des.mat2[,1],scale=scale,center=center), info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=1)), silent = TRUE)
+            } 
+            if(class(fPLS)!='try-error' && length(fPLS@modelDF)!=0){
+              myPLS = fPLS}
           } else{
             ResultsPerTargetF.i$TargetFNOmodel = rbind(ResultsPerTargetF.i$TargetFNOmodel,
                                                        data.frame("targetF" = targetF, "problem" = "No relevant regulators after variable selection"))

@@ -1696,7 +1696,7 @@ plotScores<-function(output, targetF,axe1=1,axe2=2){
     
     plot(pls@scoreMN[,1], rep(0,length(output$arguments$groups)),
          main = "Scores",
-         xlab = paste('t', axe1), ylab = paste('t', axe2),
+         xlab = paste0('t', axe1), ylab = paste('t', axe2),
          pch = 18, col = custom_colors)
     
     # Asignamos las etiquetas
@@ -1719,7 +1719,7 @@ plotScores<-function(output, targetF,axe1=1,axe2=2){
     #Create the weighting plots
     plot(pls@scoreMN[,axe1], pls@scoreMN[,axe2],
          main = "Scores",
-         xlab = paste('t', axe1), ylab = paste('t', axe2),
+         xlab = paste0('t', axe1), ylab = paste('t', axe2),
          pch = 18, col = custom_colors)
     
     # Asignamos las etiquetas

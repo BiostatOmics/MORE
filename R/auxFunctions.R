@@ -635,7 +635,7 @@ p.coef<-function(pls,R, datospls){
   a<-NULL
   for (i in 1:R){
     Yperm=sample(Y, replace=FALSE)
-    plsda.opls<-ropls::opls(datospls[,-1], scale(Yperm), scaleC='none', predI=k,
+    plsda.opls<-ropls::opls(datospls[,-1, drop=FALSE], scale(Yperm), scaleC='none', predI=k,
                      info.txtC='none', fig.pdfC='none', crossvalI=1,permI = 0)
     a<-cbind(a,plsda.opls@coefficientMN)
   }
@@ -661,7 +661,7 @@ p.valuejack<-function(pls, datospls,alfa){
   
   for (i in 1: nrow(datospls)) {
     
-    pls.opls=suppressWarnings(ropls::opls(datospls[-i,-1], scale(datospls[-i,1]), scaleC='none', predI=k,
+    pls.opls=suppressWarnings(ropls::opls(datospls[-i,-1,drop=FALSE], scale(datospls[-i,1]), scaleC='none', predI=k,
                                    info.txtC='none', fig.pdfC='none', crossvalI=1, permI = 0))
     
     if(nrow(pls.opls@coefficientMN)<nrow(coefmod)){
