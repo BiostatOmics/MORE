@@ -574,6 +574,7 @@ GetPLS = function(targetData,
         
         ResultsPerTargetF[[i]]$Y = targetData[i,]
         ResultsPerTargetF[[i]]$coefficients = NULL
+        ResultsPerTargetF[[i]]$X = des.mat2
         
         GlobalSummary$GoodnessOfFit = GlobalSummary$GoodnessOfFit[rownames(GlobalSummary$GoodnessOfFit) != targetF,]
         
@@ -592,6 +593,9 @@ GetPLS = function(targetData,
       #Aunque lo hayamos tratado todo junto ahora separamos la respuesta por target features
       
       for (i in 1:ncol(Y)) {
+        
+        #Save X matrix
+        ResultsPerTargetF[[i]]$X = des.mat2
         
         #Tratar como significativas tan solo las que cumplan ambas condiciones
         sigvariables = intersect(names(myPLS@vipVn[which(myPLS@vipVn>vip)]), rownames(pval[,i,drop=FALSE])[which(pval[,i,drop=FALSE]<alfa)])
