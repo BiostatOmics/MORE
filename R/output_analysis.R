@@ -1626,13 +1626,13 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
 plotWeight<-function(output, targetF,axe1=1,axe2=2){
   
   if(output$GlobalSummary$GoodnessOfFit[targetF,'ncomp']==1) {
-    warning('The original component extracted a unique component. The visuallization would be hard')
+    warning('The original PLS model extracted a unique component. The visuallization would be hard')
     if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
-    pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
+    pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=1)
     
     plot(pls@weightStarMN[,1], rep(0,length(output$ResultsPerTargetF[[targetF]]$significantRegulators)),
          main = "Weights*",
-         xlab = paste('w*c', axe1), ylab = paste('w*c', axe2),
+         xlab = paste0('w*c', axe1), ylab = paste0('w*c', axe2),
          pch = 18, col = "blue", xlim = c(-1,1))
     
     points(pls@cMN[,1], 0, pch = 18, col = "red")
@@ -1654,7 +1654,7 @@ plotWeight<-function(output, targetF,axe1=1,axe2=2){
     #Create the weighting plots
     plot(pls@weightStarMN[,axe1], pls@weightStarMN[,axe2],
          main = "Weights*",
-         xlab = paste('w*c', axe1), ylab = paste('w*c', axe2),
+         xlab = paste0('w*c', axe1), ylab = paste0('w*c', axe2),
          pch = 18, col = "blue", asp=1)
     
     points(pls@cMN[,axe1], pls@cMN[,axe2], pch = 18, col = "red")
@@ -1686,7 +1686,7 @@ plotWeight<-function(output, targetF,axe1=1,axe2=2){
 plotScores<-function(output, targetF,axe1=1,axe2=2){
   
   if(output$GlobalSummary$GoodnessOfFit[targetF,'ncomp']==1) {
-    warning('The original component extracted a unique component. The visuallization would be hard')
+    warning('The original PLS model extracted a unique component. The visuallization would be hard')
     if (ncol(output$arguments$targetData)<7){cross = output$arguments$targetData -2}else{cross =7}
     pls = ropls::opls(output$ResultsPerTargetF[[targetF]]$X[,output$ResultsPerTargetF[[targetF]]$significantRegulators,drop=FALSE], output$ResultsPerTargetF[[targetF]]$Y$y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=output$GlobalSummary$GoodnessOfFit[targetF,'ncomp'])
     
@@ -1696,7 +1696,7 @@ plotScores<-function(output, targetF,axe1=1,axe2=2){
     
     plot(pls@scoreMN[,1], rep(0,length(output$arguments$groups)),
          main = "Scores",
-         xlab = paste0('t', axe1), ylab = paste('t', axe2),
+         xlab = paste0('t', axe1), ylab = paste0('t', axe2),
          pch = 18, col = custom_colors)
     
     # Asignamos las etiquetas
@@ -1719,7 +1719,7 @@ plotScores<-function(output, targetF,axe1=1,axe2=2){
     #Create the weighting plots
     plot(pls@scoreMN[,axe1], pls@scoreMN[,axe2],
          main = "Scores",
-         xlab = paste0('t', axe1), ylab = paste('t', axe2),
+         xlab = paste0('t', axe1), ylab = paste0('t', axe2),
          pch = 18, col = custom_colors)
     
     # Asignamos las etiquetas
