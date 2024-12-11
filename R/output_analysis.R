@@ -2327,9 +2327,15 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
   annot2test = unique(annotation[,2])
   resultat = t(sapply(annot2test, ReguEnrich1regu1function, test = test, notTest = notTest, annotation = annotation))
   resultat = resultat[-which(as.numeric(resultat[,"annotTest"]) == 0),]
-  return(data.frame(resultat,
-                    "adjPval" = p.adjust(as.numeric(resultat[,"pval"]), method = p.adjust.method),
-                    stringsAsFactors = F))
+  if(any(class(resultat)=='matrix')){
+    return(data.frame(resultat,
+                      "adjPval" = p.adjust(as.numeric(resultat[,"pval"]), method = p.adjust.method),
+                      stringsAsFactors = F))
+  } else {
+    return(data.frame(t(c(resultat,
+                      "adjPval" = as.numeric(resultat["pval"])))))
+  }
+  
 }
 
 
@@ -2339,6 +2345,7 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' 
 #' @param output Output object of running more
 #' @param outputRegincond Output object of running RegulationInCondition function
+#' @param byHubs Indicates whether to perform the ORA for the Hub target features, TRUE, or for the target features regulated by the global regulators, FALSE. By default, TRUE.
 #' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third
 #' @param alpha The adjusted pvalue cutoff to consider
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
@@ -2347,48 +2354,61 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' @return Plot of the network induced from more.
 #' @export
 
-oraMORE = function(output, outputRegincond, annotation, alpha = 0.05,
+oraMORE = function(output, outputRegincond, byHubs = TRUE, annotation, alpha = 0.05,
                     p.adjust.method = "fdr", parallel = FALSE) {
   
   # output: Output object of running more function 
   # outputRegincond: Output object of running RegulationInCondition function
   # annotation: Annotation matrix with target features in the first column, GO terms in the second and a description in the third
   
-  #Take the GlobalRegulators to which we want to apply the object and against which we test it
-  regulators = outputRegincond$GlobalRegulators
+  #Take the reference to compare the set of genes
   reference = rownames(output$arguments$targetData)
   
-  #Take only the ones that were DE
   annotation = annotation[annotation[,1] %in% reference,]
   annotDescr = unique(annotation[,2:3])
   rownames(annotDescr) = annotDescr[,1]
   
-  options(future.globals.maxSize = 4000*1024^2)
-  if(!isFALSE(parallel)){
-    if(is.numeric(parallel)){
-      if(.Platform$OS.type == "unix") {
-        future::plan("multicore", workers = parallel)
-      }else{
-        future::plan("multisession", workers = parallel)
-      }
-    } else{
-      nc = future::availableCores() - 1
-      if(.Platform$OS.type == "unix") {
-        future::plan("multicore", workers = nc)
-      }else{
-        future::plan("multisession", workers = nc)
-      }
-    }
-    myresults <- furrr::future_map(1:length(regulators),
-                                   ~ORA.i(regulators[.],outputRegincond, reference, annotation, p.adjust.method, annotDescr,alpha),
-                                   .progress = TRUE )
+  if(byHubs){
+    
+    test = outputRegincond$HubTargetF
+    notTest = setdiff(reference, test)
+    resuRegu = ReguEnrich1regu(test, notTest, annotation, p.adjust.method = p.adjust.method)
+    myresults = resuRegu[which(resuRegu$adjPval < alpha),,drop=FALSE]
+    myresults = data.frame( "termDescr" = annotDescr[myresults[,1],2],
+                            myresults, stringsAsFactors = FALSE)
   } else{
-    myresults <- purrr::map(1:length(regulators),
-                            ~ORA.i(regulators[.],outputRegincond, reference, annotation, p.adjust.method, annotDescr,alpha),
-                            .progress = TRUE )
+    #Take the GlobalRegulators to which we want to apply the object and against which we test it
+    regulators = outputRegincond$GlobalRegulators
+    
+    options(future.globals.maxSize = 4000*1024^2)
+    if(!isFALSE(parallel)){
+      if(is.numeric(parallel)){
+        if(.Platform$OS.type == "unix") {
+          future::plan("multicore", workers = parallel)
+        }else{
+          future::plan("multisession", workers = parallel)
+        }
+      } else{
+        nc = future::availableCores() - 1
+        if(.Platform$OS.type == "unix") {
+          future::plan("multicore", workers = nc)
+        }else{
+          future::plan("multisession", workers = nc)
+        }
+      }
+      myresults <- furrr::future_map(1:length(regulators),
+                                     ~ORA.i(regulators[.],outputRegincond, reference, annotation, p.adjust.method, annotDescr,alpha),
+                                     .progress = TRUE )
+    } else{
+      myresults <- purrr::map(1:length(regulators),
+                              ~ORA.i(regulators[.],outputRegincond, reference, annotation, p.adjust.method, annotDescr,alpha),
+                              .progress = TRUE )
+    }
+    future::plan('sequential')
+    names(myresults) = regulators
+    
   }
-  future::plan('sequential')
-  names(myresults) = regulators
+  
   return(myresults)
 }
 
@@ -2398,7 +2418,7 @@ ORA.i = function(regulator, outputRegincond, reference, annotation, p.adjust.met
   test = unique(as.character(outputRegincond$RegulationInCondition[which(outputRegincond$RegulationInCondition[,"regulator"] == regulator),"targetF"]))
   notTest = setdiff(reference, test)
   resuRegu = ReguEnrich1regu(test, notTest, annotation, p.adjust.method = p.adjust.method)
-  resuRegu = resuRegu[which(resuRegu$adjPval < alpha),]
+  resuRegu = resuRegu[which(resuRegu$adjPval < alpha),,drop=FALSE]
   if (nrow(resuRegu) > 0) {
     resuRegu = data.frame("regulator" = regulator, "termDescr" = annotDescr[resuRegu[,1],2],
                           resuRegu, stringsAsFactors = FALSE)
