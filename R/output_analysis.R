@@ -464,7 +464,7 @@ RegulationInCondition <- function (outputRegpcond, cond){
 
 plotTargetFRegu = function (x.points, targetFValues, reguValues, targetFErrorValues, reguErrorValues, col = c(1,2),
                          xlab = "", yylab = c("right", "left"), pch = c(16,17), main = "",
-                         numLines = NULL, x.names = NULL, yleftlim, yrightlim) {
+                         numLines = NULL, x.names = NULL, yleftlim, yrightlim, group_names) {
   
   # Adjust the axis to include the error value
   if (missing(yrightlim)) {
@@ -485,7 +485,7 @@ plotTargetFRegu = function (x.points, targetFValues, reguValues, targetFErrorVal
   
   plot.y2(x = x.points, yright = targetFValues, yleft = reguValues, yleftlim = yleftlim,
           col = col, xlab = xlab, yylab = yylab, pch = pch, main = main, yrightlim = yrightlim,
-          yrightErrorValues = targetFErrorValues, yleftErrorValues = reguErrorValues)
+          yrightErrorValues = targetFErrorValues, yleftErrorValues = reguErrorValues, group_names = group_names)
   
   if (!is.null(numLines)) {
     for (aa in numLines) {
@@ -532,7 +532,7 @@ plot.y2 <- function(x, yright, yleft, yrightlim = range(yright, na.rm = TRUE),
                     linky = TRUE, smooth = 0, bg = c("white","white"),
                     lwds = 1, length = 10, ...,
                     x2 = NULL, yright2 = NULL, yleft2 = NULL, col2 = c(3,4),
-                    yrightErrorValues, yleftErrorValues
+                    yrightErrorValues, yleftErrorValues, group_names = NULL
 )
 {
   #par(mar = c(5,2,4,2), oma = c(0,3,0,3))
@@ -602,6 +602,19 @@ plot.y2 <- function(x, yright, yleft, yrightlim = range(yright, na.rm = TRUE),
   ## X-axis
   ##  axis(1, at = pretty(xlim, length))  ## Comment last line
   
+  if (!is.null(group_names)) {
+    num_groups = length(group_names)
+    group_position = seq(xlim[1],xlim[2], length.out = num_groups+1)
+    group_centers = head(group_position,-1)+diff(group_position)/2
+    
+    usr <- graphics::par("usr")  # usr[3] es el límite inferior del eje Y, usr[4] es el superior
+    y_text <- usr[4] - (usr[4] - usr[3]) * 0.02
+    
+    for (i in seq_along(group_names)) {
+      text(x = group_centers[i], y = y_text , 
+           labels = group_names[i], cex = 0.9, font = 1, xpd = TRUE)
+    }
+  }
   
 }
 
@@ -774,7 +787,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
     }
     numLines = which(diff(num2) != 0)+0.5
   }
-  
+  group_names = NULL
   
   # Error values
   getErrorValues = function(realValues, repsInfo) {
@@ -820,6 +833,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
           myorder = order(targetFValues)
         } else{
           myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+          group_names = unique(sort(MLRoutput$arguments$groups))
         }
         cond2plot = cond2plot[myorder]
         targetFValues = targetFValues[myorder]
@@ -888,7 +902,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
                        col = c(targetF.col, mycol), yleftlim = yleftlim,
                        xlab = xlab, yylab = c(targetF, leftlab), pch = c(16,16),
                        main = oo, numLines = numLines, x.names = eje,
-                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu,group_names = group_names)
           
           if (nrow(SigRegOmic) > 1) {
             for (i in 2:nrow(SigRegOmic)) {
@@ -933,7 +947,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
                        yylab = c(targetF, rr), pch = c(16,16),
                        main = paste(as.character(SigReg[rr, c("omic", "area")]), collapse = " "),
                        numLines = numLines, x.names = eje,
-                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
           
         }
         
@@ -973,6 +987,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
               myorder = order(targetFValues)
             } else{
               myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+              group_names = unique(sort(MLRoutput$arguments$groups))
             }
             targetFValues = targetFValues[myorder]
             reguValues = reguValues[myorder]
@@ -1008,7 +1023,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
                           yylab = c(SigniReguTargetF[i,"targetF"], regulator), pch = c(16,16),
                           main = paste(as.character(SigniReguTargetF[1,c("omic", "area")]), collapse = " "),
                           numLines = numLines, x.names = eje,
-                          targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                          targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
                           
         
       })
@@ -1046,6 +1061,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
             myorder = order(targetFValues)
           } else{
             myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+            group_names = unique(sort(MLRoutput$arguments$groups))
           }
           targetFValues = targetFValues[myorder]
           reguValues = reguValues[myorder]
@@ -1082,7 +1098,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
                      main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                   collapse = " "),
                      numLines = numLines, x.names = eje,
-                     targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                     targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu,group_names = group_names)
         
       } else {
         
@@ -1105,6 +1121,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
               myorder = order(targetFValues)
             } else{
               myorder = order(unlist(MLRoutput$arguments$condition),targetFValues)
+              group_names = unique(sort(MLRoutput$arguments$groups))
             }
             targetFValues = targetFValues[myorder]
             reguValues = reguValues[myorder]
@@ -1142,7 +1159,7 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
                        main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                     collapse = " "),
                        numLines = numLines, x.names = eje,
-                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
         } else {
           cat("The selected regulator was not declared as relevant by the ElasticNet\n")
           cat("Please, either select another regulator or provide the regulator values.\n")
@@ -1232,7 +1249,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
     }
     numLines = which(diff(num2) != 0)+0.5
   }
-  
+  group_names = NULL
   
   # Error values
   getErrorValues = function(realValues, repsInfo) {
@@ -1279,6 +1296,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
           myorder = order(targetFValues)
         } else{
           myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+          group_names = unique(sort(PLSoutput$arguments$groups))
         }
         cond2plot = cond2plot[myorder]
         targetFValues = targetFValues[myorder]
@@ -1346,7 +1364,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
                        col = c(targetF.col, mycol), yleftlim = yleftlim,
                        xlab = xlab, yylab = c(targetF, leftlab), pch = c(16,16),
                        main = oo, numLines = numLines, x.names = eje,
-                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
           
           if (nrow(SigRegOmic) > 1) {
             for (i in 2:nrow(SigRegOmic)) {
@@ -1391,7 +1409,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
                        yylab = c(targetF, rr), pch = c(16,16),
                        main = paste(as.character(SigReg[rr, c("omic", "area")]), collapse = " "),
                        numLines = numLines, x.names = eje,
-                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
           
         }
         
@@ -1436,6 +1454,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
               myorder = order(targetFValues)
             } else{
               myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+              group_names = unique(sort(PLSoutput$arguments$groups))
             }
             targetFValues = targetFValues[myorder]
             reguValues = reguValues[myorder]
@@ -1466,7 +1485,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
                        yylab = c(SigniReguTargetF[i,"targetF"], regulator), pch = c(16,16),
                        main = paste(as.character(SigniReguTargetF[1,c("omic", "area")]), collapse = " "),
                        numLines = numLines, x.names = eje,
-                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
         })
       } else { cat("Regulator values could not be recovered from output. Please provide them in reguValues argument to generate the plot.\n") }
       
@@ -1501,6 +1520,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
             myorder = order(targetFValues)
           } else{
             myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+            group_names = unique(sort(PLSoutput$arguments$groups))
           }
           targetFValues = targetFValues[myorder]
           reguValues = reguValues[myorder]
@@ -1537,7 +1557,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
                      main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                   collapse = " "),
                      numLines = numLines, x.names = eje,
-                     targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                     targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
         
       } else {
         
@@ -1559,6 +1579,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
               myorder = order(targetFValues)
             } else{
               myorder = order(unlist(PLSoutput$arguments$condition),targetFValues)
+              group_names = unique(sort(PLSoutput$arguments$groups))
             }
             targetFValues = targetFValues[myorder]
             reguValues = reguValues[myorder]
@@ -1595,7 +1616,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
                        main = paste(as.character(targetFResults$allRegulators[regulator, c("omic", "area")]),
                                     collapse = " "),
                        numLines = numLines, x.names = eje,
-                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu)
+                       targetFErrorValues = errorValues, reguErrorValues = errorValuesRegu, group_names = group_names)
         } else {
           cat("The selected regulator was not declared as significant by the PLS model\n")
           cat("Please, either select another regulator or provide the regulator values.\n")
