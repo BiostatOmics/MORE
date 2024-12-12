@@ -1921,7 +1921,7 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
                stat = "identity", position = position_dodge()) +
       theme_minimal() +
       scale_fill_manual(values = custom_colors) +
-      scale_alpha_manual(values = c("R2" = 1, "None" = 0.3),  guide = guide_legend(title = "Filter applied to\nTargetF")) +
+      scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"), guide = guide_legend(title = "Model filtering")) +
       theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
             axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
       labs( x = "", y = "% targetFs with significant regulators") 
@@ -1982,7 +1982,7 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
                stat = "identity", position = position_dodge()) +
       theme_minimal() + scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic,'associations')) +
       scale_fill_manual(values = custom_colors) +
-      scale_alpha_manual(values = c("R2" = 1, "None" = 0.3),  guide = guide_legend(title = "Filter applied to\nTargetF")) +
+      scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"),  guide = guide_legend(title = "Model filtering")) +
       scale_y_continuous(limits = c(0, max(df$targetFs) + 1)) +
       theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
             axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
