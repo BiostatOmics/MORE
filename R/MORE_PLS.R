@@ -885,10 +885,7 @@ ResultsPerTargetF.i<-function(targetF,GlobalSummary,regulatoryData,associations,
             } 
             if(class(fPLS)!='try-error' && length(fPLS@modelDF)!=0){
               myPLS = fPLS}
-          } else{
-            ResultsPerTargetF.i$TargetFNOmodel = rbind(ResultsPerTargetF.i$TargetFNOmodel,
-                                                       data.frame("targetF" = targetF, "problem" = "No significant regulators after variable selection"))
-          }
+          } 
           
           ## Extracting significant regulators and recovering correlated regulators
           myvariables = unlist(strsplit(sigvariables, ":", fixed = TRUE))
