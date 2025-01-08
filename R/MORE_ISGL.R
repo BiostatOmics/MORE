@@ -535,6 +535,12 @@ GetISGL = function(targetData,
           myvariables = unlist(strsplit(mycoef, ":", fixed = TRUE))
           myvariables = intersect(myvariables, ResultsPerTargetF[[i]]$allRegulators[,'regulator'])
           
+          ## Remove if only group is significant
+          if(length(myvariables)==0){
+            GlobalSummary$TargetFNOmodel = rbind(GlobalSummary$TargetFNOmodel,
+                                                 data.frame("targetF" = targetF, "problem" = "No relevant regulators after variable selection"))
+          }
+          
           ResultsPerTargetF[[i]]$allRegulators = data.frame(ResultsPerTargetF[[i]]$allRegulators, "Rel" = 0, stringsAsFactors = FALSE)
           ResultsPerTargetF[[i]]$allRegulators[myvariables, "Rel"] = 1
           

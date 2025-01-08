@@ -684,6 +684,12 @@ ResultsPerTargetF.i.mlr<-function(targetF,GlobalSummary,regulatoryData,associati
         mycondi = intersect(myvariables, colnames(des.mat))
         myvariables = intersect(myvariables, rownames(ResultsPerTargetF.i$allRegulators))
         
+        ## Remove if only group is significant
+        if(length(myvariables)==0){
+          ResultsPerTargetF.i$TargetFNOmodel = rbind(ResultsPerTargetF.i$TargetFNOmodel,
+                                                     data.frame("targetF" = targetF, "problem" = "No relevant regulators after variable selection"))
+        }
+        
         ResultsPerTargetF.i$allRegulators = data.frame(ResultsPerTargetF.i$allRegulators, "Rel" = 0, stringsAsFactors = FALSE)
         ResultsPerTargetF.i$allRegulators[myvariables, "Rel"] = 1
         ResultsPerTargetF.i$coefficients = regulatorcoef

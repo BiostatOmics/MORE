@@ -894,6 +894,12 @@ ResultsPerTargetF.i<-function(targetF,GlobalSummary,regulatoryData,associations,
           myvariables = unlist(strsplit(sigvariables, ":", fixed = TRUE))
           myvariables = intersect(myvariables, rownames(ResultsPerTargetF.i$allRegulators))
           
+          ## Remove if only group is significant
+          if(length(myvariables)==0){
+            ResultsPerTargetF.i$TargetFNOmodel = rbind(ResultsPerTargetF.i$TargetFNOmodel,
+                                                       data.frame("targetF" = targetF, "problem" = "No significant regulators after variable selection"))
+          }
+          
           ResultsPerTargetF.i$allRegulators = data.frame(ResultsPerTargetF.i$allRegulators, "Sig" = 0, stringsAsFactors = FALSE)
           ResultsPerTargetF.i$allRegulators[myvariables, "Sig"] = 1
           
