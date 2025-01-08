@@ -2492,3 +2492,91 @@ gseaMORE<-function(outputRegincond, outputRegincond2 = NULL, annotation, alpha =
   
   return(y)
 }
+
+#' upsetMORE
+#'
+#' \code{upsetMORE} Function to be applied to a list of RegulationInCondition function outputs.
+#' 
+#' @param listRegincond List with the output of RegulationInCondition for the conditions to be compared. It must be a named list with the condition as names. 
+#' @param byHubs Indicates whether to create the UpSet for the Hub target features, TRUE, or for the Global Regulators, FALSE. By default, TRUE.
+#' 
+#' @return UpSet plot of the hub target features/global regulators induced from more.
+#' @export
+
+
+upsetMORE = function(listRegincond, byHubs = TRUE){
+  
+  #Verify required packages are installed
+  
+  if (!requireNamespace("UpSetR", quietly = TRUE)) {
+    stop("Package 'UpSetR' is required but not installed. Please install it to use this function.")
+  }
+  if (!requireNamespace("ComplexUpset", quietly = TRUE)) {
+    stop("Package 'ComplexUpset' is required but not installed. Please install it to use this function.")
+  }
+  
+  #Create the lists according to the plots to create
+  if(byHubs){
+    x = lapply(listRegincond, function(x) x$HubTargetF)
+  } else {
+    x = lapply(listRegincond, function(x) x$GlobalRegulators)
+  }
+  
+  data = UpSetR::fromList(x)
+  
+  #Ask for biostatomics colors
+  conditions = names(data)
+  num_unique = length(conditions)+1
+  color_palette = colorbiostat(num_unique)
+  custom_colors = setNames(color_palette[-1], conditions)
+  
+  queries = lapply(conditions, function(cond) {
+    ComplexUpset::upset_query(set = cond, fill = custom_colors[cond]) })
+  
+  #Create the Upset
+  ComplexUpset::upset(
+    data,
+    conditions,
+    queries=queries,
+    base_annotations=list(
+      'Intersection size'=(
+        ComplexUpset::intersection_size(
+          bar_number_threshold=1,  # show all numbers on top of bars
+          width=0.5,   # reduce width of the bars
+        )
+        # add some space on the top of the bars
+        + scale_y_continuous(expand=expansion(mult=c(0, 0.05)))
+        + theme(
+          # hide grid lines
+          panel.grid.major=element_blank(),
+          panel.grid.minor=element_blank(),
+          # show axis lines
+          axis.line=element_line(colour='black')
+        )
+      )
+    ),
+    stripes=ComplexUpset::upset_stripes(
+      geom=geom_segment(size=12),  # make the stripes larger
+      colors=c('grey95', 'white')
+    ),
+    matrix=ComplexUpset::intersection_matrix(
+      geom=geom_point(
+        shape='circle filled',
+        size=3,
+        stroke=0
+      )
+    ),
+    set_sizes=(
+      ComplexUpset::upset_set_size(geom=geom_bar(width=0.4))
+      + theme(
+        axis.line.x=element_line(colour='black'),
+        axis.ticks.x=element_line()
+      )
+    ),
+    sort_sets=FALSE,
+    sort_intersections='descending'
+  )
+  
+}
+
+

@@ -636,7 +636,7 @@ GetPLS = function(targetData,
           GlobalSummary$ReguPerTargetF[targetF, grep("-Sig", colnames(GlobalSummary$ReguPerTargetF))] = contando
         } else{
           GlobalSummary$TargetFNOmodel = rbind(GlobalSummary$TargetFNOmodel,
-                                               data.frame("targetF" = targetF, "problem" = "No relevant regulators after variable selection"))
+                                               data.frame("targetF" = targetF, "problem" = "No significant regulators after variable selection"))
         }
         
         ResultsPerTargetF[[i]]$Y = data.frame("y" = myPLS@suppLs$y[,i,drop=FALSE], "fitted.y" = myPLS@suppLs$yPreMN[,i,drop=FALSE],
@@ -887,7 +887,7 @@ ResultsPerTargetF.i<-function(targetF,GlobalSummary,regulatoryData,associations,
               myPLS = fPLS}
           } else{
             ResultsPerTargetF.i$TargetFNOmodel = rbind(ResultsPerTargetF.i$TargetFNOmodel,
-                                                       data.frame("targetF" = targetF, "problem" = "No relevant regulators after variable selection"))
+                                                       data.frame("targetF" = targetF, "problem" = "No significant regulators after variable selection"))
           }
           
           ## Extracting significant regulators and recovering correlated regulators
