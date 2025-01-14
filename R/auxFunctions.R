@@ -618,7 +618,7 @@ Scaling.type= function(reguVal, scaletype){
     
   }
   
-  rownames(res.mat) = rownames(reguVal)
+  rownames(res.mat) = rownames(reguVal[[ov]])
   return(res.mat)
 }
 
