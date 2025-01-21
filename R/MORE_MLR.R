@@ -415,13 +415,13 @@ GetMLR = function(targetData,
                                         ~ResultsPerTargetF.i.mlr(AlltargetFs[.],GlobalSummary,regulatoryData,associations,targetData,omicType,
                                                               condition, des.mat,myregLV,myregNA,col.filter,correlation,epsilon,
                                                               scale,center,scaleType,interactions,elasticnet,family2),
-                                        .progress = TRUE,.options = furrr_options(seed = TRUE))
+                                        .progress = TRUE,.options = furrr::furrr_options(seed = TRUE))
   } else{
     ResultsPerTargetF <- purrr::map(1:ntargetFs,
                                         ~ResultsPerTargetF.i.mlr(AlltargetFs[.],GlobalSummary,regulatoryData,associations,targetData,omicType,
                                                               condition, des.mat,myregLV,myregNA,col.filter,correlation,epsilon,
                                                               scale,center,scaleType,interactions,elasticnet,family2),
-                                        .progress = TRUE,.options = furrr_options(seed = TRUE))
+                                        .progress = TRUE,.options = furrr::furrr_options(seed = TRUE))
   }
   
   

@@ -456,13 +456,13 @@ GetPLS = function(targetData,
                                           ~ResultsPerTargetF.i(AlltargetFs[.],GlobalSummary,regulatoryData,associations,targetData,omicType,
                                                             condition, des.mat,myregLV,myregNA,scale,center,scaleType,
                                                             interactions,varSel,vip,alfa),
-                                          .progress = TRUE,.options = furrr_options(seed = TRUE) )
+                                          .progress = TRUE,.options = furrr::furrr_options(seed = TRUE) )
     } else{
       ResultsPerTargetF <- purrr::map(1:ntargetFs,
                                           ~ResultsPerTargetF.i(AlltargetFs[.],GlobalSummary,regulatoryData,associations,targetData,omicType,
                                                             condition, des.mat,myregLV,myregNA,scale,center,scaleType,
                                                             interactions,varSel,vip,alfa),
-                                          .progress = TRUE,.options = furrr_options(seed = TRUE) )
+                                          .progress = TRUE,.options = furrr::furrr_options(seed = TRUE) )
     }
 
     
