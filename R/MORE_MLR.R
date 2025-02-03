@@ -218,13 +218,13 @@ GetMLR = function(targetData,
     repeated = intersect(rownames(targetData), rownames(regulatoryData[[i]]))
     
     if(length(repeated) > 0) {
-      cat(names(regulatoryData)[i], "omic and target omic have shared identifiers in regulators:", repeated, "\n")
+      cat(names(regulatoryData)[i], "omic and target omic have shared identifiers. Omic label added. \n")
       #Change the name in the association matrix only if is not NULL
       if(!is.null(associations[[i]])){
-        associations[[i]][[2]][associations[[i]][[2]]%in%repeated] = paste(names(regulatoryData)[i],'-', associations[[i]][[2]][associations[[i]][[2]]%in%repeated], sep='')
+        associations[[i]][[2]] = paste(names(regulatoryData)[i],'-', associations[[i]][[2]], sep='')
       }
       #Change the name in regulatoryData
-      rownames(regulatoryData[[i]])[rownames(regulatoryData[[i]])%in%repeated] = paste(names(regulatoryData)[i],'-',  rownames(regulatoryData[[i]])[rownames(regulatoryData[[i]])%in%repeated], sep='')
+      rownames(regulatoryData[[i]]) = paste(names(regulatoryData)[i],'-',  rownames(regulatoryData[[i]]), sep='')
     }
   }
 
@@ -235,17 +235,17 @@ GetMLR = function(targetData,
         repeated = intersect(rownames(regulatoryData[[i]]), rownames(regulatoryData[[j]]))
         
         if(length(repeated) > 0) {
-          cat(names(regulatoryData)[i], "and", names(regulatoryData)[j], "omics have shared identifiers in regulators:", repeated, "\n")
+          cat(names(regulatoryData)[i], "and", names(regulatoryData)[j], "omics have shared identifiers. Omic label added. \n")
           #Change the name in the association matrix only if is not NULL
           if(!is.null(associations[[i]])){
-            associations[[i]][[2]][associations[[i]][[2]]%in%repeated] =  paste(names(regulatoryData)[i],'-', associations[[i]][[2]][associations[[i]][[2]]%in%repeated], sep='')
+            associations[[i]][[2]] =  paste(names(regulatoryData)[i],'-', associations[[i]][[2]], sep='')
           }
           if(!is.null(associations[[j]])){
-            associations[[j]][[2]][associations[[j]][[2]]%in%repeated] =  paste(names(regulatoryData)[j],'-', associations[[j]][[2]][associations[[j]][[2]]%in%repeated], sep='')
+            associations[[j]][[2]] =  paste(names(regulatoryData)[j],'-', associations[[j]][[2]], sep='')
           }
           #Change the name in regulatoryData
-          rownames(regulatoryData[[i]])[rownames(regulatoryData[[i]])%in%repeated] =  paste(names(regulatoryData)[i],'-', rownames(regulatoryData[[i]])[rownames(regulatoryData[[i]])%in%repeated],sep='')
-          rownames(regulatoryData[[j]])[rownames(regulatoryData[[j]])%in%repeated] =  paste(names(regulatoryData)[j],'-', rownames(regulatoryData[[j]])[rownames(regulatoryData[[j]])%in%repeated],sep = '')
+          rownames(regulatoryData[[i]]) =  paste(names(regulatoryData)[i],'-', rownames(regulatoryData[[i]]),sep='')
+          rownames(regulatoryData[[j]]) =  paste(names(regulatoryData)[j],'-', rownames(regulatoryData[[j]]),sep = '')
           
         }
       }
