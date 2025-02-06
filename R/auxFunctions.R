@@ -541,8 +541,8 @@ ElasticNet = function (family2, des.mat2, epsilon, elasticnet) {
                   alpha = x, standardize = FALSE, thres = epsilon,
                   family = family2, grouped = FALSE)})
       
-      lambdamin = 10000000
-      cvupmin = 1000000000
+      lambdamin = .Machine$double.xmax 
+      cvupmin = .Machine$double.xmax 
       cvEN = NULL
       elasticnet = NULL
       for ( i in 1:length(cvs)){
