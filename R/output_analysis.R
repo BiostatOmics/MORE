@@ -415,11 +415,29 @@ RegulationPerCondition = function(output, filterR2 = 0){
   return(myresults)
 }
 
+#' FilterRegulationPerCondition
+#'
+#' \code{FilterRegulationPerCondition} Function to be applied to \link{more} and \link{RegulationPerCondition} function outputs.
+#' 
+#' @param output Output object of \link{more} function.
+#' @param outputRegpcond Output object of \link{RegulationPerCondition} function.
+#' @param filterR2 Filters the results for the genes that showed a R2 above the one indicated. By default, 0.
+#' 
+#' @return RegulationPerCondition matrix filtered to the genes with a R2 above the indicated.
+#'
+#' @export
+
+FilterRegulationPerCondition <- function(output, outputRegpcond, filterR2 = 0){
+  filtered_targetF <- rownames(output$GlobalSummary$GoodnessOfFit)[which(output$GlobalSummary$GoodnessOfFit[, 1] > filterR2)]
+  filtered_outputRegpcond <- outputRegpcond[outputRegpcond$targetF %in% filtered_targetF,,drop=FALSE]
+  return(filtered_outputRegpcond)
+}
+
 #' RegulationInCondition
 #'
 #' \code{RegulationInCondition} Function to be applied to \link{RegulationPerCondition} function output.
 #' 
-#' @param outputRegpcond Output object of \link{RegulationPerCondition} function output.
+#' @param outputRegpcond Output object of \link{RegulationPerCondition} function.
 #' @param cond Biological condition from which the user wants to summarize the information.
 #' 
 #' @return List with the hub target features, global regulators and the regulators with their coefficients specific to the requested condition.
@@ -602,11 +620,11 @@ plot.y2 <- function(x, yright, yleft,
   if(!is.null(yrightErrorValues) && !is.null(yleftErrorValues)){
     
     
-    y_min = min(targetFValues - targetFErrorValues, na.rm = TRUE)
-    y_max = max(targetFValues + targetFErrorValues, na.rm = TRUE)
+    y_min = min(targetFValues - yrightErrorValues, na.rm = TRUE)
+    y_max = max(targetFValues + yrightErrorValues, na.rm = TRUE)
     
-    y_minreg = min(reguValues - reguErrorValues, na.rm = TRUE)
-    y_maxreg = max(reguValues + reguErrorValues, na.rm = TRUE)
+    y_minreg = min(reguValues - yleftErrorValues, na.rm = TRUE)
+    y_maxreg = max(reguValues + yleftErrorValues, na.rm = TRUE)
     
     p = p + geom_point(aes(y = yleft), color = col[2], shape = type[1], size = 2) +
       geom_line(aes(y = yleft), color = col[2], linewidth = lwd[1]) +
