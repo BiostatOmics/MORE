@@ -21,5 +21,5 @@ Before installation, it might be necessary to install the required dependencies:
 
 ## Usage
 
-You can find the User Guide for the package in the vignettes folder or access it directly [here](https://github.com/BiostatOmics/MORE/blob/master/vignettes/UsersGuide.pdf).
+You can find the User Guide for the package in the vignettes folder or access it directly [here](https://github.com/BiostatOmics/MORE/blob/master/vignettes/UsersGuide.pdf). Furthermore, in the same folder we include a full step-by-step tutorial to run MORE (accessible [here](https://github.com/BiostatOmics/MORE/blob/master/vignettes/tutorial.html))
 

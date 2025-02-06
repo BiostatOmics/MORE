@@ -11,12 +11,15 @@ plotMORE(
   simplify = FALSE,
   reguValues = NULL,
   plotPerOmic = FALSE,
-  targetF.col = 1,
+  targetF.col = NULL,
   regu.col = NULL,
   order = TRUE,
   xlab = "",
   cont.var = NULL,
   cond2plot = NULL,
+  smooth = TRUE,
+  size = 3,
+  breakby = c(0.3, 0.3),
   ...
 )
 }
@@ -27,11 +30,13 @@ plotMORE(
 
 \item{regulator}{ID of the regulator to be plotted. If NULL (default), all regulators of the target feature are plotted.}
 
+\item{simplify}{If TRUE, a boxplot (if the regulator is binary) or a Scatterplot (otherwise) is plotted to represent the relationship between the target feature and the regulator provided to the function. If FALSE (default), the target feature and the regulator profiles will be plotted.}
+
 \item{reguValues}{Vector containing the values of a regulator. If NULL (default), these values are taken from the output object as long as they are available.}
 
 \item{plotPerOmic}{If TRUE, all the relevant/significant regulators of the given target feature and the same omic are plotted in the same graph. If FALSE (default), each regulator is plotted in a separate plot.}
 
-\item{targetF.col}{Color to plot the target feature. By default, 1 (black).}
+\item{targetF.col}{Color to plot the target feature. By default, biostatomic colors.}
 
 \item{order}{If TRUE (default), the values in X-axis are ordered.}
 
@@ -40,6 +45,12 @@ plotMORE(
 \item{cont.var}{Vector with length equal to the number of observations in data, which optionally may contain the values of the numerical variable (e.g. time) to be plotted on the X-axis. By default, NULL.}
 
 \item{cond2plot}{Vector or factor indicating the experimental group of each value to represent. If NULL (default), the labels are taken from the experimental design matrix.}
+
+\item{smooth}{If TRUE (default), smoothing is applied via splines so that the profiles could be more easily seen.}
+
+\item{size}{Size of the X-axis labels. By default, 3.}
+
+\item{breakby}{Range in which values should be displayed in Y-axis for regulators and target features, respectively. By default, c(0.3,0.3).}
 
 \item{regul.col}{Color to plot the regulator. If NULL (default), a color will be assigned by the function, that will be different for each regulatory omic.}
 }

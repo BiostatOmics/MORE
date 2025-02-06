@@ -13,6 +13,7 @@ more(
   clinic = NULL,
   clinicType = NULL,
   minVariation = 0,
+  percNA = 0.2,
   scaleType = "auto",
   epsilon = 1e-05,
   interactions = TRUE,
@@ -61,6 +62,8 @@ the regression models. In the case of binary regulators, if the proportion of th
 the regulator is considered to have low variation and will be excluded from the regression models. The user has the option to set a single 
 value to apply the same filter to all omics, provide a vector of the same length as omics if they want to specify different levels for each omics, 
 or use 'NA' when they want to apply a minimum variation filter but are uncertain about the threshold. By default, 0.}
+
+\item{percNA}{Maximum percentage of missing values present in regulatoryData regulators and observations to use them to construct the models. Only used in PLS models.}
 
 \item{scaleType}{Type of scaling to be applied. Four options:
 \itemize{
