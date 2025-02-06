@@ -7,7 +7,7 @@
 RegulationInCondition(outputRegpcond, cond)
 }
 \arguments{
-\item{outputRegpcond}{Output object of \link{RegulationPerCondition} function output.}
+\item{outputRegpcond}{Output object of \link{RegulationPerCondition} function.}
 
 \item{cond}{Biological condition from which the user wants to summarize the information.}
 }
