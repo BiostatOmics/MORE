@@ -7,7 +7,8 @@
 oraMORE(
   output,
   outputRegincond,
-  byHubs = TRUE,
+  byHubs = FALSE,
+  byOmic = NULL,
   annotation,
   alpha = 0.05,
   p.adjust.method = "fdr",
@@ -20,6 +21,8 @@ oraMORE(
 \item{outputRegincond}{Output object of running RegulationInCondition function}
 
 \item{byHubs}{Indicates whether to perform the ORA for the Hub target features, TRUE, or for the target features regulated by the global regulators, FALSE. By default, TRUE.}
+
+\item{byOmic}{If provided (it must follow the same nomenclature that in regulatoryData), it performs the ORA to the regulators of the specified omic. Incompatible with other methodologies specified in byHubs parameter. By default, NULL.}
 
 \item{annotation}{Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third}
 
