@@ -693,46 +693,61 @@ plotMORE = function(output, targetF, regulator = NULL, simplify = FALSE, reguVal
     SigniReguTargetF = GetPairstargetFRegulator(targetFs = targetF, output = output)
     omic = SigniReguTargetF[SigniReguTargetF[,"regulator"] == regulator,'omic']
     
-    if (output$arguments$omicType[omic]==0){
-      df <- data.frame(
+    if(is.null(output$arguments$condition)){
+      
+      df = data.frame(
+        gen = unlist(output$arguments$targetData[targetF,,drop=TRUE]),
+        regulador = unlist(output$arguments$regulatoryData[[omic]][regulator,,drop=TRUE]))
+      
+      color_palette = colorbiostat(1)
+      
+      if (output$arguments$omicType[omic]==0){
+        
+        ggplot2::ggplot(df, aes(x = regulador, y = gen)) +
+          theme_minimal()+
+          geom_point(color = color_palette, fill = NA, shape=21) +
+          labs( x = paste("Regulator\n",regulator), y = paste("Target Feature\n",targetF))
+        
+      } else {
+        
+        df$regulador<-factor(df$regulador)
+        ggplot2::ggplot(df, aes(x = regulador, y = gen)) + theme_minimal()+
+          geom_boxplot(color = color_palette) +  
+          scale_x_discrete(labels = c('0','1')) + 
+          labs( x = paste("Regulator \n",regulator), y = paste("Target feature\n",targetF))
+        
+      }
+      
+    } else{
+      
+      df = data.frame(
         gen = unlist(output$arguments$targetData[targetF,,drop=TRUE]),
         regulador = unlist(output$arguments$regulatoryData[[omic]][regulator,,drop=TRUE]),
         Group = output$arguments$groups)
       
-      # Create a scatterplot
+      num_unique = length(unique(df$Group))+1
+      color_palette = colorbiostat(num_unique)
+      custom_colors = setNames(color_palette[-1], unique(df$Group))
       
-      num_unique <- length(unique(df$Group))+1
-      color_palette <- colorbiostat(num_unique)
-      custom_colors <- setNames(color_palette[-1], unique(df$Group))
-      ggplot2::ggplot(df, aes(x = regulador, y = gen, color = Group)) +
-        geom_point() + scale_color_manual(values = custom_colors)+
-        theme_minimal()+
-        #geom_abline(intercept = c(coefs[1,2],coefs[2,2],coefs[3,2]),slope = c(coefs[1,3],coefs[2,3],coefs[3,3]),color=c('#15918A','#74CDF0','#EE446F'),linetype=c('solid','solid',"dashed"))+
-        #geom_abline(intercept = 0,slope = coefs[2,2],color='#74CDF0')+
-        #geom_abline(intercept = 0,slope = coefs[3,2],color='#EE446F',linetype="dashed")+
-        labs( x = paste("Regulator\n",regulator), y = paste("Target Feature\n",targetF))
-      #geom_smooth(method = "lm", se = FALSE, aes(group = group)) 
-      #+geom_abline(intercept = intercept, slope = slope, color="red",  
-      #linetype="dashed", size=1.5)+ 
-      
-    } else {
-      
-      df <- data.frame(
-        gen = unlist(output$arguments$targetData[targetF,,drop=TRUE]),
-        regulador = unlist(output$arguments$regulatoryData[[omic]][regulator,,drop=TRUE]),
-        Group = output$arguments$groups)
-      df$regulador<-factor(df$regulador)
-      
-      num_unique <- length(unique(df$Group))+1
-      color_palette <- colorbiostat(num_unique)
-      custom_colors <- setNames(color_palette[-1], unique(df$Group))
-      # Create a scatterplot
-      ggplot2::ggplot(df, aes(x = regulador, y = gen,fill=Group)) + theme_minimal()+
-        geom_boxplot() + scale_fill_manual(values = custom_colors)+  scale_color_manual(values = custom_colors)+
-        scale_x_discrete(labels = c('0','1')) + stat_summary(aes(color = Group),fun='median',geom = 'point', position = position_dodge(width = 0.75))+
-        labs( x = paste("Regulator \n",regulator), y = paste("Target feature\n",targetF))
+      if (output$arguments$omicType[omic]==0){
+        
+        ggplot2::ggplot(df, aes(x = regulador, y = gen, color = Group)) +
+          geom_point() + scale_color_manual(values = custom_colors)+
+          theme_minimal()+
+          labs( x = paste("Regulator\n",regulator), y = paste("Target Feature\n",targetF))
+        
+      } else {
+        
+        df$regulador<-factor(df$regulador)
+        ggplot2::ggplot(df, aes(x = regulador, y = gen,fill=Group)) + theme_minimal()+
+          geom_boxplot() + scale_fill_manual(values = custom_colors)+  scale_color_manual(values = custom_colors)+
+          scale_x_discrete(labels = c('0','1')) + stat_summary(aes(color = Group),fun='median',geom = 'point', position = position_dodge(width = 0.75))+
+          labs( x = paste("Regulator \n",regulator), y = paste("Target feature\n",targetF))
+        
+      }
       
     }
+    
   } else{
     if(output$arguments$method=='MLR'||output$arguments$method=='ISGL'){
       
@@ -751,7 +766,6 @@ plotMORE = function(output, targetF, regulator = NULL, simplify = FALSE, reguVal
   
   
 }
-
 
 
 plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plotPerOmic = FALSE,
@@ -2020,65 +2034,104 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
     filtered_outputRegpcond <- outputRegpcond[outputRegpcond$targetF %in% filtered_targetF,,drop=FALSE]
     
     pos <- grep("Group", colnames(outputRegpcond))[1]
-    cts <- matrix(NA, nrow = (ngroups) + 1, ncol = length(omics) + 1)
-    cts2 <- matrix(NA, nrow = (ngroups) + 1, ncol = length(omics) + 1)
-    for (i in 1:((ngroups) + 1)) {
+    if(is.na(pos)){
+      
+      cts <- matrix(NA, nrow = 1, ncol = length(omics) + 1)
+      cts2 <- matrix(NA, nrow = 1, ncol = length(omics) + 1)
+      
       for (j in 1:((length(omics)) + 1)) {
-        if (i == 1 && j == 1) {
-          cts[i, j] <- length(unique(outputRegpcond$targetF))
-          cts2[i, j] <- length(unique(filtered_outputRegpcond$targetF))
-        } else if (i == 1) {
-          cts[i, j] <- length(unique(outputRegpcond[outputRegpcond$omic == omics[j - 1], ]$targetF))
-          cts2[i, j] <- length(unique(filtered_outputRegpcond[filtered_outputRegpcond$omic == omics[j - 1], ]$targetF))
-        } else if (j == 1) {
-          cts[i, j] <- length(unique(outputRegpcond[outputRegpcond[, pos + (i - 2)] != 0, ]$targetF))
-          cts2[i, j] <- length(unique(filtered_outputRegpcond[filtered_outputRegpcond[, pos + (i - 2)] != 0, ]$targetF))
+        if ( j == 1) {
+          cts[1, j] <- length(unique(outputRegpcond$targetF))
+          cts2[1, j] <- length(unique(filtered_outputRegpcond$targetF))
         } else {
-          sub_gr <- outputRegpcond[outputRegpcond$omic == omics[j - 1], ]
-          cts[i, j] <- length(unique(sub_gr[sub_gr[, pos + (i - 2)] != 0, ]$targetF))
-          sub_gr <- filtered_outputRegpcond[filtered_outputRegpcond$omic == omics[j - 1], ]
-          cts2[i, j] <- length(unique(sub_gr[sub_gr[, pos + (i - 2)] != 0, ]$targetF))
+          cts[1, j] <- length(unique(outputRegpcond[outputRegpcond$omic == omics[j - 1], ]$targetF))
+          cts2[1, j] <- length(unique(filtered_outputRegpcond[filtered_outputRegpcond$omic == omics[j - 1], ]$targetF))
+        } 
+      }
+      
+      cts <- cts / totaltargetFs * 100
+      cts2 <- cts2 / totaltargetFs * 100
+      
+      df <- data.frame(
+        omic = c("Any", names(output$arguments$regulatoryData)),
+        targetFs = as.vector(cts),
+        filteredR2 =  as.vector(cts2) )
+      
+      num_unique <- length(omics)+1
+      color_palette <- colorbiostat(num_unique)
+      custom_colors <- setNames(color_palette, c('Any',omics))
+      
+      ggplot2::ggplot() +
+        # First layer: filteredR2
+        geom_bar(data = df, aes(x = omic, y = filteredR2, fill = omic, alpha = "R2"),
+                 stat = "identity", position = position_dodge()) +
+        # Second layer: targetFs
+        geom_bar(data = df, aes(x = omic, y = targetFs, fill = omic, alpha = "None"),
+                 stat = "identity", position = position_dodge()) +
+        theme_minimal() +
+        scale_fill_manual(values = custom_colors) +
+        scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"), guide = guide_legend(title = "Model filtering")) +
+        theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
+              axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
+        labs( x = "", y = "% targetFs with significant regulators")
+      
+    } else{
+      cts <- matrix(NA, nrow = (ngroups) + 1, ncol = length(omics) + 1)
+      cts2 <- matrix(NA, nrow = (ngroups) + 1, ncol = length(omics) + 1)
+      for (i in 1:((ngroups) + 1)) {
+        for (j in 1:((length(omics)) + 1)) {
+          if (i == 1 && j == 1) {
+            cts[i, j] <- length(unique(outputRegpcond$targetF))
+            cts2[i, j] <- length(unique(filtered_outputRegpcond$targetF))
+          } else if (i == 1) {
+            cts[i, j] <- length(unique(outputRegpcond[outputRegpcond$omic == omics[j - 1], ]$targetF))
+            cts2[i, j] <- length(unique(filtered_outputRegpcond[filtered_outputRegpcond$omic == omics[j - 1], ]$targetF))
+          } else if (j == 1) {
+            cts[i, j] <- length(unique(outputRegpcond[outputRegpcond[, pos + (i - 2)] != 0, ]$targetF))
+            cts2[i, j] <- length(unique(filtered_outputRegpcond[filtered_outputRegpcond[, pos + (i - 2)] != 0, ]$targetF))
+          } else {
+            sub_gr <- outputRegpcond[outputRegpcond$omic == omics[j - 1], ]
+            cts[i, j] <- length(unique(sub_gr[sub_gr[, pos + (i - 2)] != 0, ]$targetF))
+            sub_gr <- filtered_outputRegpcond[filtered_outputRegpcond$omic == omics[j - 1], ]
+            cts2[i, j] <- length(unique(sub_gr[sub_gr[, pos + (i - 2)] != 0, ]$targetF))
+          }
         }
       }
+      
+      cts <- cts / totaltargetFs * 100
+      cts2 <- cts2 / totaltargetFs * 100
+      group_levels <- c("Global", gsub("Group_", "", colnames(outputRegpcond)[pos:ncol(outputRegpcond)]))
+      
+      df <- data.frame(
+        Group = factor(rep(group_levels, times = length(omics) + 1), levels = group_levels),
+        omic = rep(c("Any", names(output$arguments$regulatoryData)), each = ngroups + 1),
+        targetFs = as.vector(cts),
+        filteredR2 =  as.vector(cts2) )
+      
+      num_unique <- ngroups + 1
+      color_palette <- colorbiostat(num_unique)
+      custom_colors <- setNames(color_palette, unique(df$Group))
+      
+      ggplot2::ggplot() +
+        # First layer: filteredR2
+        geom_bar(data = df, aes(x = omic, y = filteredR2, fill = Group, alpha = "R2"),
+                 stat = "identity", position = position_dodge()) +
+        # Second layer: targetFs
+        geom_bar(data = df, aes(x = omic, y = targetFs, fill = Group, alpha = "None"),
+                 stat = "identity", position = position_dodge()) +
+        theme_minimal() +
+        scale_fill_manual(values = custom_colors) +
+        scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"), guide = guide_legend(title = "Model filtering")) +
+        theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
+              axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
+        labs( x = "", y = "% targetFs with significant regulators") 
     }
     
-    cts <- cts / totaltargetFs * 100
-    cts2 <- cts2 / totaltargetFs * 100
-    group_levels <- c("Global", gsub("Group_", "", colnames(outputRegpcond)[pos:ncol(outputRegpcond)]))
-    
-    df <- data.frame(
-      Group = factor(rep(group_levels, times = length(omics) + 1), levels = group_levels),
-      omic = rep(c("Any", names(output$arguments$regulatoryData)), each = ngroups + 1),
-      targetFs = as.vector(cts),
-      filteredR2 =  as.vector(cts2) )
-    
-    num_unique <- ngroups + 1
-    color_palette <- colorbiostat(num_unique)
-    custom_colors <- setNames(color_palette, unique(df$Group))
-    
-    ggplot2::ggplot() +
-      # First layer: filteredR2
-      geom_bar(data = df, aes(x = omic, y = filteredR2, fill = Group, alpha = "R2"),
-               stat = "identity", position = position_dodge()) +
-      # Second layer: targetFs
-      geom_bar(data = df, aes(x = omic, y = targetFs, fill = Group, alpha = "None"),
-               stat = "identity", position = position_dodge()) +
-      theme_minimal() +
-      scale_fill_manual(values = custom_colors) +
-      scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"), guide = guide_legend(title = "Model filtering")) +
-      theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
-            axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
-      labs( x = "", y = "% targetFs with significant regulators") 
     
   } else {
     
     ngroups = length(unique(output$arguments$groups))
     omics = names(output$arguments$regulatoryData)
-    pos = grep('Group',colnames(outputRegpcond))[1]
-    #Create all the counts needed globally and per groups
-    
-    cts = matrix(NA, nrow=(ngroups),ncol=length(omics))
-    cts2 <- matrix(NA, nrow = (ngroups), ncol = length(omics))
     
     total_reg_omic <- if (is.null(output$arguments$associations)) {
       sapply(output$arguments$regulatoryData, nrow)
@@ -2097,40 +2150,84 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
     filtered_targetF <- rownames(output$GlobalSummary$GoodnessOfFit)[which(output$GlobalSummary$GoodnessOfFit[, 1] > filterR2)]
     filtered_outputRegpcond <- outputRegpcond[outputRegpcond$targetF %in% filtered_targetF,,drop=FALSE]
     
-    for (i in 1:ngroups){
-      #Create the global values
+    
+    pos = grep('Group',colnames(outputRegpcond))[1]
+    #Create all the counts needed globally and per groups
+    
+    if(is.na(pos)){
+      
+      cts = matrix(NA, nrow=1,ncol=length(omics))
+      cts2 <- matrix(NA, nrow = 1, ncol = length(omics))
+      
       for (j in 1:length(omics)){
-        temp =outputRegpcond[outputRegpcond[,pos+i-1]!=0,]
-        cts[i,j] = nrow(temp[temp$regulator %in% outputRegpcond[outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
-        temp =filtered_outputRegpcond[filtered_outputRegpcond[,pos+i-1]!=0,]
-        cts2[i,j] = nrow(temp[temp$regulator %in% filtered_outputRegpcond[filtered_outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
-        
+        cts[1,j] = nrow(outputRegpcond[outputRegpcond$regulator %in% outputRegpcond[outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
+        cts2[1,j] = nrow(filtered_outputRegpcond[filtered_outputRegpcond$regulator %in% filtered_outputRegpcond[filtered_outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
       }
+      
+      #Create a df with the percentage of target features with significant regulators by omic and condition
+      df <- data.frame(omic=names(output$arguments$regulatoryData),
+                       targetFs=as.vector(cts), filteredR2 =  as.vector(cts2))
+      
+      num_unique <- length(omics)+1
+      color_palette <- colorbiostat(num_unique)
+      custom_colors <- setNames(color_palette[-1], omics)
+      
+      ggplot2::ggplot() +
+        # First layer: filteredR2
+        geom_bar(data = df, aes(x = omic, y = filteredR2, fill = omic, alpha = "R2"),
+                 stat = "identity", position = position_dodge()) +
+        # Second layer: targetFs
+        geom_bar(data = df, aes(x = omic, y = targetFs, fill = omic, alpha = "None"),
+                 stat = "identity", position = position_dodge()) +
+        theme_minimal() + scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic)) +
+        scale_fill_manual(values = custom_colors) +
+        scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"),  guide = guide_legend(title = "Model filtering")) +
+        scale_y_continuous(limits = c(0, max(df$targetFs) + 1)) +
+        theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
+              axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
+        labs( x = "Number of associations per omic", y = "% significant regulations") 
+      
+    } else{
+      cts = matrix(NA, nrow=(ngroups),ncol=length(omics))
+      cts2 <- matrix(NA, nrow = (ngroups), ncol = length(omics))
+      
+      for (i in 1:ngroups){
+        #Create the global values
+        for (j in 1:length(omics)){
+          temp =outputRegpcond[outputRegpcond[,pos+i-1]!=0,]
+          cts[i,j] = nrow(temp[temp$regulator %in% outputRegpcond[outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
+          temp =filtered_outputRegpcond[filtered_outputRegpcond[,pos+i-1]!=0,]
+          cts2[i,j] = nrow(temp[temp$regulator %in% filtered_outputRegpcond[filtered_outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
+          
+        }
+      }
+      group_levels <- gsub('Group_','',colnames(outputRegpcond)[pos:ncol(outputRegpcond)])
+      #Create a df with the percentage of target features with significant regulators by omic and condition
+      df <- data.frame(Group=factor(rep(group_levels, times=length(omics)), levels = group_levels),
+                       omic=rep(names(output$arguments$regulatoryData),each = ngroups),
+                       targetFs=as.vector(cts), filteredR2 =  as.vector(cts2))
+      
+      num_unique <- ngroups+1
+      color_palette <- colorbiostat(num_unique)
+      custom_colors <- setNames(color_palette[-1], unique(df$Group))
+      
+      ggplot2::ggplot() +
+        # First layer: filteredR2
+        geom_bar(data = df, aes(x = omic, y = filteredR2, fill = Group, alpha = "R2"),
+                 stat = "identity", position = position_dodge()) +
+        # Second layer: targetFs
+        geom_bar(data = df, aes(x = omic, y = targetFs, fill = Group, alpha = "None"),
+                 stat = "identity", position = position_dodge()) +
+        theme_minimal() + scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic)) +
+        scale_fill_manual(values = custom_colors) +
+        scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"),  guide = guide_legend(title = "Model filtering")) +
+        scale_y_continuous(limits = c(0, max(df$targetFs) + 1)) +
+        theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
+              axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
+        labs( x = "Number of associations per omic", y = "% significant regulations") 
+      
     }
-    group_levels <- gsub('Group_','',colnames(outputRegpcond)[pos:ncol(outputRegpcond)])
-    #Create a df with the percentage of target features with significant regulators by omic and condition
-    df <- data.frame(Group=factor(rep(group_levels, times=length(omics)), levels = group_levels),
-                     omic=rep(names(output$arguments$regulatoryData),each = ngroups),
-                     targetFs=as.vector(cts), filteredR2 =  as.vector(cts2))
     
-    num_unique <- ngroups+1
-    color_palette <- colorbiostat(num_unique)
-    custom_colors <- setNames(color_palette[-1], unique(df$Group))
-    
-    ggplot2::ggplot() +
-      # First layer: filteredR2
-      geom_bar(data = df, aes(x = omic, y = filteredR2, fill = Group, alpha = "R2"),
-               stat = "identity", position = position_dodge()) +
-      # Second layer: targetFs
-      geom_bar(data = df, aes(x = omic, y = targetFs, fill = Group, alpha = "None"),
-               stat = "identity", position = position_dodge()) +
-      theme_minimal() + scale_x_discrete(labels = paste(unique(df$omic),'\n',total_reg_omic,'associations')) +
-      scale_fill_manual(values = custom_colors) +
-      scale_alpha_manual(values = c("R2" = 1, "None" = 0.3), labels = c("R2" = paste0("R2>", filterR2), "None" = "None"),  guide = guide_legend(title = "Model filtering")) +
-      scale_y_continuous(limits = c(0, max(df$targetFs) + 1)) +
-      theme(legend.text = element_text(size = 12), panel.grid = element_line(color = "black", linewidth = 0.5, linetype = 1),
-            axis.text.x = element_text(size = 11), axis.text.y = element_text(size = 11)) +
-      labs( x = "", y = "% significant regulations") 
     
   }
 }
@@ -2490,6 +2587,7 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' @param output Output object of running more
 #' @param outputRegincond Output object of running RegulationInCondition function
 #' @param byHubs Indicates whether to perform the ORA for the Hub target features, TRUE, or for the target features regulated by the global regulators, FALSE. By default, TRUE.
+#' @param byOmic If provided (it must follow the same nomenclature that in regulatoryData), it performs the ORA to the regulators of the specified omic. Incompatible with other methodologies specified in byHubs parameter. By default, NULL.
 #' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third
 #' @param alpha The adjusted pvalue cutoff to consider
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
@@ -2498,8 +2596,8 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' @return Plot of the network induced from more.
 #' @export
 
-oraMORE = function(output, outputRegincond, byHubs = TRUE, annotation, alpha = 0.05,
-                    p.adjust.method = "fdr", parallel = FALSE) {
+oraMORE = function(output, outputRegincond, byHubs = FALSE, byOmic = NULL, annotation, alpha = 0.05,
+                   p.adjust.method = "fdr", parallel = FALSE) {
   
   # output: Output object of running more function 
   # outputRegincond: Output object of running RegulationInCondition function
@@ -2521,8 +2619,12 @@ oraMORE = function(output, outputRegincond, byHubs = TRUE, annotation, alpha = 0
     myresults = data.frame( "termDescr" = annotDescr[myresults[,1],2],
                             myresults, stringsAsFactors = FALSE)
   } else{
-    #Take the GlobalRegulators to which we want to apply the object and against which we test it
-    regulators = outputRegincond$GlobalRegulators
+    
+    if(!is.null(byOmic)){
+      regulators = outputRegincond$RegulationInCondition$regulator[which(outputRegincond$RegulationInCondition$omic==byOmic)]
+    } else{
+      regulators = outputRegincond$GlobalRegulators
+    }
     
     options(future.globals.maxSize = 4000*1024^2)
     if(!isFALSE(parallel)){
