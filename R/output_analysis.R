@@ -2725,7 +2725,7 @@ gseaMORE<-function(outputRegincond, outputRegincond2 = NULL, annotation, alpha =
     rownames(merged_df)<-merged_df[,1]
     merged_df<-merged_df[,-1]
     #Create the score for the GSEA
-    merged_df[,3]<-merged_df[,2]-merged_df[,1]
+    merged_df[,3]<-log2((merged_df[,2]+1)/(merged_df[,1]+1))
     
     geneList <- setNames(merged_df[,3], rownames(merged_df))
     geneList <- sort(geneList, decreasing = TRUE)
