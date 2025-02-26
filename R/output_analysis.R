@@ -509,7 +509,6 @@ plotTargetFRegu = function (x.points, targetFValues, reguValues, targetFErrorVal
 }
 
 
-# Plot Y2 -----------------------------------------------------------------
 
 # Inspired by Ajay Shah Plot 2 time series with different y axes (left and right),
 # in https://stat.ethz.ch/pipermail/r-help/2004-March/047775.html)
