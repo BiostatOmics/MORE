@@ -10,7 +10,7 @@
 
 options(stringsAsFactors = FALSE)
 
-library(ropls)
+# library(ropls)
 
 #'
 #'\code{GetPLS} fits a PLS model for all the features in the target omic dataset to identify
@@ -495,7 +495,6 @@ GetPLS = function(targetData,
     RetRegul = GetAllReg(targetF=targetF, associations=associations, data.omics = regulatoryData)
     RetRegul.targetF = RetRegul$Results  ## RetRegul$TableTargetF: nr reg per omic
     ## Some of these reg will be removed, because they are not in regulatoryData
-    
     #Add information about initial potential regulators
     GlobalSummary$ReguPerTargetF[1:nrow(GlobalSummary$ReguPerTargetF), grep("-Ini", colnames(GlobalSummary$ReguPerTargetF))]=rep(as.numeric(RetRegul$TableTargetF[-1]),each=length(AlltargetFs))
     
@@ -510,7 +509,6 @@ GetPLS = function(targetData,
                             myregLV=myregLV, myregNA=myregNA, data.omics=regulatoryData)
     rm(myregLV);rm(myregNA);rm(RetRegul.targetF);rm(RetRegul);gc()
     ## Create the interactions between regulators and condition 
-    
     des.mat2 = RegulatorsInteractions(interactions, reguValues = res$RegulatorMatrix, reguInfo = res$SummaryPerTargetF,
                                           des.mat, method ='pls')
     
@@ -537,7 +535,6 @@ GetPLS = function(targetData,
     allRegulators[quito,"filter"] = "Constant"
     
     Y = scale(t(targetData), center = center, scale = scale)
-    
     ## Computing PLS model
     if (nrow(des.mat2)<7){cross = nrow(des.mat)-2}else{cross =7}
     myPLS = try(suppressWarnings( ropls::opls(des.mat2, Y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0)),silent = TRUE)

@@ -688,16 +688,16 @@ p.valuejack<-function(pls, datospls,alfa){
 }
 
 # p-values for PLS2 models ------------------------------------------------
+setClass("myropls",
+         slots = list(
+           modelDF = "data.frame",
+           coefficientMN = "matrix",
+           vipVn = "numeric",
+           summaryDF = "data.frame" ,
+           suppLs = "list"
+         ))
+
 suppressInnecPLSdata<-function(myPLS){
-  
-  setClass("myropls",
-           slots = list(
-             modelDF = "data.frame",
-             coefficientMN = "matrix",
-             vipVn = "numeric",
-             summaryDF = "data.frame" ,
-             suppLs = "list"
-           ))
   
   # Create an empty object
   resPLS <- new("myropls")

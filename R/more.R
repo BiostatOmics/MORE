@@ -10,12 +10,22 @@
 
 options(stringsAsFactors = FALSE)
 
-library(igraph)
-library(MASS)
-library(glmnet)
-library(psych)
-library(car)
-library(furrr)
+# library(igraph)
+# library(MASS)
+# library(glmnet)
+# library(psych)
+# library(car)
+# library(furrr)
+#' @import igraph
+#' @import MASS
+#' @import glmnet
+#' @import psych
+#' @import car
+#' @import furrr
+#' @import ggplot2
+#' @import ropls
+#' @import sglfast
+#' @import ltm
 
 setClass("MORE")
 

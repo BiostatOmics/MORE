@@ -1,4 +1,3 @@
-#' @import ggplot2
 
 biostat_colors <- c(`green` = "#3bdfa2",
                     `red` = "#d11d56",

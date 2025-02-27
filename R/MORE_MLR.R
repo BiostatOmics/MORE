@@ -10,7 +10,7 @@
 
 options(stringsAsFactors = FALSE)
 
-library(ltm)
+# library(ltm)
 
 #' Generalized Linear Models
 #'

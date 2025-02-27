@@ -10,8 +10,8 @@
 
 options(stringsAsFactors = FALSE)
 
-library(sglfast)
-library(ropls)
+# library(sglfast)
+# library(ropls)
 #'
 #'\code{GetISGL} fits a MLR model with Iterative Sparse Group Lasso (ISGL) penalization
 #' for all the features in the target omic to identify the conditions and potential
