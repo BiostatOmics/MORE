@@ -2351,7 +2351,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     
     #Select regulations with effects on response in the selected percentile
     qc = quantile(abs(df[,4]),pc)[[1]]
-    df = df[which(abs(df[,4])>qc),,drop=FALSE]
+    df = df[which(abs(df[,4])>=qc),,drop=FALSE]
     
     #Data.frame of that network
     nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
@@ -2403,11 +2403,11 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     df[, 8] <- ifelse(sign(df[, 5]) == -1, 'n', 'p')
     
     # Assign line type
-    df[, 7] <- ifelse(df[, 4] == 0, 'v', 
-                      ifelse(df[, 5] == 0, 'd', 
+    df[, 7] <- ifelse(df[, 4] == 0, 'p', 
+                      ifelse(df[, 5] == 0, 'v', 
                              ifelse(sign(df[, 4]) == sign(df[, 5]), 
                                     ifelse(abs(df[, 4]) > abs(df[, 5]), 'e', 's'), 
-                                    'p')))
+                                    'd')))
     
     # Assign column 8 based on the sign of Reference if Group2 = 0
     df[df[, 5] == 0, 8] <- ifelse(sign(df[df[, 5] == 0, 4]) == -1, 'n', 'p')
@@ -2459,7 +2459,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       df = df[df[,6] != 0, ]
       #Select regulations with effects on response in the selected percentile
       qc = quantile(abs(df[,6]),pc)[[1]]
-      df = df[which(abs(df[,6])>qc),,drop=FALSE]
+      df = df[which(abs(df[,6])>=qc),,drop=FALSE]
       #Add the line type and sign
       df = DifLineType(df)
       
@@ -2514,13 +2514,13 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       
       if (length(gr1) != 1 || length(gr2) != 1 || gr1 == gr2){stop("ERROR: group1 and group2 should be different names of groups to compare")}
       #Create the differential coefficient and the indicator of sign change
-      df <- outputRegpcond[, c(1,2,3,gr2,gr1)]
-      df[, 6] = df[, 4] - df[, 5]
+      df <- outputRegpcond[, c(1,2,3,gr1,gr2)]
+      df[, 6] = df[, 5] - df[, 4]
       #Remove rows with same effect
       df = df[df[,6] != 0, ]
       #Select regulations with effects on response in the selected percentile
       qc = quantile(abs(df[,6]),pc)[[1]]
-      df = df[which(abs(df[,6])>qc),,drop=FALSE]
+      df = df[which(abs(df[,6])>=qc),,drop=FALSE]
       #Add the line type and sign
       df = DifLineType(df)
       
