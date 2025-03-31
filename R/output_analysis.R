@@ -2403,8 +2403,8 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     df[, 8] <- ifelse(sign(df[, 5]) == -1, 'n', 'p')
     
     # Assign line type
-    df[, 7] <- ifelse(df[, 4] == 0, 'p', 
-                      ifelse(df[, 5] == 0, 'v', 
+    df[, 7] <- ifelse(df[, 4] == 0, 'v', 
+                      ifelse(df[, 5] == 0, 'p', 
                              ifelse(sign(df[, 4]) == sign(df[, 5]), 
                                     ifelse(abs(df[, 4]) > abs(df[, 5]), 'e', 's'), 
                                     'd')))
