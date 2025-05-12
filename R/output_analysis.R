@@ -433,6 +433,98 @@ FilterRegulationPerCondition <- function(output, outputRegpcond, filterR2 = 0){
   return(filtered_outputRegpcond)
 }
 
+#' BetaTest
+#'
+#' \code{BetaTest} Function to test if the coefficients for each condition are statistically different from zero.
+#' 
+#' @param output Output object of \link{more} function when MLR model is used.
+#' @param outputRegpcond Output object of \link{RegulationPerCondition} function.
+#' @param alfa Significance level. By default, 0.05.
+#' 
+#' @return Modified outputRegpcond table with zeros in the coefficients that did not present statistically significant differences.
+#'
+#' @export
+
+BetaTest = function(output, outputRegpcond, alfa =0.05){
+  
+  family = gaussian()
+  #Add a progressbar
+  pb = txtProgressBar(min = 0, max = length(unique(outputRegpcond$targetF)), style = 3)
+  
+  for (mytargetF in unique(outputRegpcond$targetF)){
+    setTxtProgressBar(pb, value = which(unique(outputRegpcond$targetF)==mytargetF))
+    # Coeficientes distintos de 0 en todas las columnas: significa que tendran una suma y debera hacerse el test.
+    mycoeffs = outputRegpcond[outputRegpcond[,"targetF"] == mytargetF,]
+    mycoeffs = mycoeffs[, c(1,2,5:ncol(mycoeffs))]
+    #Hay que eliminar aquellas observaciones cuyos betas sean todos cero mientras que no son cero en el grupo de referencia
+    
+    mycoeffs = mycoeffs[which(apply(mycoeffs[,5:ncol(mycoeffs), drop=FALSE], 1, sum)!=0),, drop=FALSE]
+    
+    # Si todos los reguladores tienen interseccion (no aparecen solos), no habra suma de coeficientes y dara fallo.
+    # Pongo el siguiente if para controlar esto.
+    if(dim(mycoeffs)[1] != 0){
+      
+      # Comparo que reguladores tienen coeficientes distintos en cada grupo: eso significara que ha habido interaccion y aparece solo en el modelo,
+      # entonces habra una suma de coeficientes.
+      # El primero es el referencial, comparo con el. Lo he intentado con apply, devuelve cada elemento si es TRUE o FALSE y yo quiero la fila.
+      # También con which() pero no devuelve
+      # la posicion de la fila.
+      betas = NULL
+      for(j in 1:nrow(mycoeffs)){
+        if(any(mycoeffs[j,4] != mycoeffs[j, 5:ncol(mycoeffs)])){betas = rbind(betas, mycoeffs[j,])}
+      }
+      
+      # Hay suma de coeficientes.
+      if(!is.null(betas)){
+        mySignificatives = rownames(output$ResultsPerTargetF[[mytargetF]]$coefficients)[-1]
+        mySigni = gsub("`", "", mySignificatives)
+        myY = output$ResultsPerTargetF[[mytargetF]]$Y[,1]
+        myX = output$ResultsPerTargetF[[mytargetF]]$X
+        myX = myX[, mySigni]
+        
+        for(i in 1:nrow(betas)){
+          
+          # Para tener en cuenta si es omica_mc_R.
+          if(betas[i,"representative"] == ""){
+            myRegulator = betas[i, "regulator"]
+          } else {
+            myRegulator = betas[i, "representative"]
+          }
+          
+          aquitar = mySignificatives[grep(myRegulator, mySignificatives)]
+          group = unlist(strsplit(aquitar, ":", fixed = TRUE))
+          group = gsub("`",  "",group[grep("Group", group)])
+          
+          # Modelo GLM
+          mymodel = glm(myY~., data = myX, family = family)
+          myHyp = paste0("`",paste(aquitar, collapse = "+"), "` = 0")
+          pvalue = try(suppressWarnings(linearHypothesis(mymodel, c(myHyp), test = "Chisq")$"Pr(>Chisq)"[2]), silent = TRUE)
+          
+          if(class(pvalue) == "try-error"){
+            pvalue = NA
+          } else{
+            if(pvalue > alfa){
+              # Para escoger la fila correcta segun el nombre del regulador.
+              if(betas[i,"representative"] == ""){
+                outputRegpcond[outputRegpcond[, "targetF"] == mytargetF & outputRegpcond[, "regulator"] == myRegulator, group] = 0
+              } else {
+                outputRegpcond[outputRegpcond[, "targetF"] == mytargetF & outputRegpcond[, "representative"] == myRegulator, group] = 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  close(pb)
+  
+  #Remove the regulations that show 0 coefficient in all the Groups
+  outputRegpcond = outputRegpcond[!apply(outputRegpcond[, 6:ncol(outputRegpcond)], 1, function(x) all(x == 0)), ]
+  
+  return(outputRegpcond)
+}
+
+
 #' RegulationInCondition
 #'
 #' \code{RegulationInCondition} Function to be applied to \link{RegulationPerCondition} function output.
