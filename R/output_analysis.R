@@ -2198,6 +2198,7 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
         omic = rep(c("Any", names(output$arguments$regulatoryData)), each = ngroups + 1),
         targetFs = as.vector(cts),
         filteredR2 =  as.vector(cts2) )
+      df$omic = factor(df$omic, levels = c('Any',names(output$arguments$regulatoryData)))
       
       num_unique <- ngroups + 1
       color_palette <- colorbiostat(num_unique)
@@ -2232,7 +2233,7 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
           temp =output$arguments$associations[[x]][output$arguments$associations[[x]][,1] %in% names(output$ResultsPerTargetF), ]
           nrow(temp[temp[,2] %in% rownames(output$arguments$regulatoryData[[x]]), ])
         } else {
-          nrow(output$arguments$regulatoryData[[x]])
+          nrow(output$arguments$regulatoryData[[x]])*length(names(output$ResultsPerTargetF))
         }
       })
     }
@@ -2289,7 +2290,6 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
           cts[i,j] = nrow(temp[temp$regulator %in% outputRegpcond[outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
           temp =filtered_outputRegpcond[filtered_outputRegpcond[,pos+i-1]!=0,]
           cts2[i,j] = nrow(temp[temp$regulator %in% filtered_outputRegpcond[filtered_outputRegpcond$omic==omics[j],]$regulator,])/total_reg_omic[j]*100
-          
         }
       }
       group_levels <- gsub('Group_','',colnames(outputRegpcond)[pos:ncol(outputRegpcond)])
@@ -2297,6 +2297,7 @@ summaryPlot <- function(output, outputRegpcond, filterR2 = 0, byTargetF = TRUE) 
       df <- data.frame(Group=factor(rep(group_levels, times=length(omics)), levels = group_levels),
                        omic=rep(names(output$arguments$regulatoryData),each = ngroups),
                        targetFs=as.vector(cts), filteredR2 =  as.vector(cts2))
+      df$omic = factor(df$omic, levels = names(output$arguments$regulatoryData))
       
       num_unique <- ngroups+1
       color_palette <- colorbiostat(num_unique)
