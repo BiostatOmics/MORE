@@ -2535,7 +2535,7 @@ differentialRegPlot = function(output, outputRegpcond){
 #' @param group2 Name of the group to compare to the reference in the differential network creation. By default, NULL.
 #' @param pc Percentile to consider to plot the most affecting regulators into the target omic. It must be a value comprissed between 0 and 1. By default, 0.
 #' @param pathway If provided, the function will print the regulatory network involved in the specified pathway instead of the entire regulatory network. By default, NULL.
-#' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
+#' @param annotation Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
 #' @param save If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.
 #' @return Plot of the network induced from more.
 #' @export
@@ -2786,7 +2786,7 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' @param outputRegincond Output object of running RegulationInCondition function
 #' @param byHubs Indicates whether to perform the ORA for the Hub target features, TRUE, or for the target features regulated by the global regulators, FALSE. By default, TRUE.
 #' @param byOmic If provided (it must follow the same nomenclature that in regulatoryData), it performs the ORA to the regulators of the specified omic. Incompatible with other methodologies specified in byHubs parameter. By default, NULL.
-#' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third
+#' @param annotation Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third.
 #' @param alpha The adjusted pvalue cutoff to consider
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
 #' @param parallel parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter.
@@ -2881,7 +2881,7 @@ ORA.i = function(regulator, outputRegincond, reference, annotation, p.adjust.met
 #' 
 #' @param outputRegincond Output object of running RegulationInCondition function
 #' @param outputRegincond2 Output object of running RegulationInCondition function for other group different to the previous. By default, NULL.
-#' @param annotation Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third
+#' @param annotation Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third.
 #' @param alpha The adjusted pvalue cutoff to consider
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
 #' 
