@@ -835,7 +835,7 @@ ResultsPerTargetF.i<-function(targetF,GlobalSummary,regulatoryData,associations,
         ResultsPerTargetF.i$X = des.mat2[,-1, drop = FALSE]
         
         ## Computing PLS model
-        if (nrow(des.mat2)<7){cross = nrow(des.mat)-2}else{cross =7}
+        if (nrow(des.mat2)<7){cross = nrow(des.mat2)-2}else{cross =7}
         myPLS = try(suppressWarnings(ropls::opls(des.mat2[,-1,drop=FALSE],scale(des.mat2[,1],scale=scale,center=center) , info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0)),silent = TRUE)
         
         if(class(myPLS)=='try-error' || length(myPLS@modelDF)==0){
