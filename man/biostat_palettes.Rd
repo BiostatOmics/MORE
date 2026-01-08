@@ -5,7 +5,7 @@
 \alias{biostat_palettes}
 \title{Biostatomics color palette}
 \format{
-An object of class \code{list} of length 7.
+An object of class \code{list} of length 8.
 }
 \usage{
 biostat_palettes

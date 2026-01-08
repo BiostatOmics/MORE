@@ -500,7 +500,7 @@ BetaTest = function(output, outputRegpcond, alfa =0.05){
           myHyp = paste0("`",paste(aquitar, collapse = "+"), "` = 0")
           pvalue = try(suppressWarnings(linearHypothesis(mymodel, c(myHyp), test = "Chisq")$"Pr(>Chisq)"[2]), silent = TRUE)
           
-          if(class(pvalue) == "try-error"){
+          if(inherits(pvalue, "try-error")){
             pvalue = NA
           } else{
             if(pvalue > alfa){
@@ -2017,7 +2017,7 @@ plotScores<-function(output, targetF,axe1=1,axe2=2){
 #' @return Summary of more analysis.
 #' @export
 
-summary.MORE <-function(object, plot.more=FALSE){
+summary.MORE <-function(object, plot.more=FALSE, ...){
   
   cat('A model was computed for',length(object$ResultsPerTargetF), 'target features.' ,'\n')
   cat(ifelse(is.null(object$GlobalSummary$TargetFNOregu),0,nrow(object$GlobalSummary$TargetFNOregu)), 'target features had no intial regulators.' ,'\n')

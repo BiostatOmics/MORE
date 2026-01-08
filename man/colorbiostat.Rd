@@ -11,7 +11,7 @@ colorbiostat(n, reverse = FALSE, palette = "main")
 
 \item{reverse}{A logical value indicating whether the colors in the selected palette should be reversed (Default: `FALSE`).}
 
-\item{palette}{A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "cblindfriendly", "sunshine", "hot", "warm" and "cold" (Default: "main").}
+\item{palette}{A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "complete", "cblindfriendly", "sunshine", "hot", "warm", "grass" and "oficial" (Default: "main").}
 }
 \value{
 A character vector of colors corresponding to the specified number and palette.
@@ -27,7 +27,7 @@ It's essential to note that if the requested number of colors (`n`) is less than
 \examples{
 library(ggplot2)
 data("iris")
-colorSpecies <- colorbiostat(3, palette = "cold")
+colorSpecies <- colorbiostat(3, palette = "oficial")
 plot(x = iris$Sepal.Length, y = iris$Sepal.Width, col = colorSpecies[iris$Species], pch = 16)
 
 }

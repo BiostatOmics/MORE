@@ -7,7 +7,7 @@
 biostat_pal(palette = "main", reverse = FALSE, ...)
 }
 \arguments{
-\item{palette}{A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "cblindfriendly", "sunshine", "hot", "warm" and "cold".}
+\item{palette}{A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "complete", "cblindfriendly", "sunshine", "hot", "warm", "grass", and "oficial".}
 
 \item{reverse}{A logical value indicating whether the colors in the selected palette should be reversed. Default is `FALSE`.}
 

@@ -1,3 +1,4 @@
+#' @import ggplot2
 
 biostat_colors <- c(`green` = "#3bdfa2",
                     `red` = "#d11d56",
@@ -32,8 +33,9 @@ biostat_palettes <- list(
   
   `hot`   = biostat_cols("red", "b_orange"),
   `warm`  = biostat_cols("blue", "violet"),
-  `grass`  = biostat_cols("green", "b_dgreen")
-  )
+  `grass`  = biostat_cols("green", "b_dgreen"),
+  `oficial` = c('#44344f','#564d80','#98a6d4','#9fc490','#dff2d8','#cccccc')
+)
 
 #' Return Biostatomics Color Palettes
 #'
@@ -91,7 +93,7 @@ getbiostatColors <- function(){
 #' The BioStatOmics color palettes, available in the BioStatOmicsColors package, have been specifically curated for scientific visualizations. The `biostat_pal` function leverages the `colorRampPalette` function from the `grDevices` package to interpolate between the colors of the chosen BioStatOmics palette. This interpolation capability ensures that users can generate a continuous range of colors, suitable for representing a wide variety of data types and scales. Whether visualizing continuous data gradients or categorical distinctions, the interpolated BiostatOmics palettes can provide clarity and aesthetic appeal to the visual representation.
 #'
 #' @param palette
-#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "cblindfriendly", "sunshine", "hot", "warm" and "cold".
+#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "complete", "cblindfriendly", "sunshine", "hot", "warm", "grass", and "oficial".
 #' @param reverse
 #' A logical value indicating whether the colors in the selected palette should be reversed. Default is `FALSE`.
 #' @param ...
@@ -122,7 +124,7 @@ biostat_pal <- function(palette = "main", reverse = FALSE, ...) {
 #' @param reverse
 #' A logical value indicating whether the colors in the selected palette should be reversed (Default: `FALSE`).
 #' @param palette
-#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "cblindfriendly", "sunshine", "hot", "warm" and "cold" (Default: "main").
+#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "complete", "cblindfriendly", "sunshine", "hot", "warm", "grass" and "oficial" (Default: "main").
 #'
 #' @return
 #' A character vector of colors corresponding to the specified number and palette.
@@ -135,12 +137,12 @@ biostat_pal <- function(palette = "main", reverse = FALSE, ...) {
 #' @examples
 #' library(ggplot2)
 #' data("iris")
-#' colorSpecies <- colorbiostat(3, palette = "cold")
+#' colorSpecies <- colorbiostat(3, palette = "oficial")
 #' plot(x = iris$Sepal.Length, y = iris$Sepal.Width, col = colorSpecies[iris$Species], pch = 16)
 #'
 colorbiostat <- function(n, reverse = FALSE, palette = "main"){
   if(!palette %in% names(biostat_palettes)){
-    message("Palette musst be some of the following palettes: ", paste(names(biostat_palettes),sep= " ", collapse= ", "))
+    message("Palette must be some of the following palettes: ", paste(names(biostat_palettes),sep= " ", collapse= ", "))
   }
   
   pal <- biostat_pal(palette = palette, reverse = reverse)
@@ -164,7 +166,7 @@ colorbiostat <- function(n, reverse = FALSE, palette = "main"){
 #' When the `continuous` parameter is set to `TRUE`, the function employs the `scale_color_gradientn` function from `ggplot2` to generate a continuous color scale. Conversely, for discrete data, the `discrete_scale` function is utilized. This ensures that the chosen palette is optimally represented in the plot, irrespective of the data type.
 #'
 #' @param palette
-#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "cblindfriendly", "sunshine", "hot", "warm" and "cold" (Default: "main").
+#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "complete", "cblindfriendly", "sunshine", "hot", "warm", "grass" and "oficial" (Default: "main").
 #' @param continuous
 #' A logical value indicating whether the color aesthetic represents continuous data (Default: `FALSE`).
 #' @param reverse
@@ -210,7 +212,7 @@ scale_color_biostat <- function(palette = "main", continuous = FALSE, reverse = 
 #' When the `continuous` parameter is set to `TRUE`, the function employs the `scale_fill_gradientn` function from `ggplot2` to generate a continuous color scale. Conversely, for discrete data, the `discrete_scale` function is utilized. This ensures that the chosen palette is optimally represented in the plot, irrespective of the data type.
 #'
 #' @param palette
-#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "nature", "sunshine", "hot", "warm", "cold", and "complete" (Default: "main").
+#' A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "complete", "cblindfriendly", "sunshine", "hot", "warm", "grass", and "oficial" (Default: "main").
 #' @param continuous
 #' A logical value indicating whether the color aesthetic represents continuous data (Default: `FALSE`).
 #' @param reverse
@@ -248,4 +250,3 @@ scale_fill_biostat <- function(palette = "main", continuous = FALSE, reverse = F
   }
   
 }
-

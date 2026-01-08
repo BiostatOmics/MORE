@@ -26,17 +26,17 @@ options(stringsAsFactors = FALSE)
 #' transcription factors, methylation, etc.). The names of the list will represent the omics. Each element in 
 #' the list should be a data frame with 2 columns (optionally 3), describing the potential interactions between target omic features
 #' and regulators for that omic. First column must contain the target omic features (the ones of 
-#' \code{\link{targetData}} object), second column must contain the regulators, and an optional third column can
+#' \code{targetData} object), second column must contain the regulators, and an optional third column can
 #' be added to describe the type of interaction (e.g., for methylation, if a CpG site is located in
 #' the promoter region of the gene, in the first exon, etc.). If the user lacks prior knowledge of the potential regulators, they can set the parameter to NULL. 
-#' In this case, all regulators in \code{\link{regulatoryData}} will be treated as potential regulators for all target omic features. In this case, for computational efficiency, it is recommended to use PLS2 \code{\link{method}}.
+#' In this case, all regulators in \code{regulatoryData} will be treated as potential regulators for all target omic features. In this case, for computational efficiency, it is recommended to use PLS2 \code{method}.
 #' Additionally, if the users have prior knowledge for certain omics and want to set other omics to NULL, they can do so.
-#' @param omicType Vector which indicates the type of data of omics introduced in \code{\link{regulatoryData}}. The user should code as 0 numeric omics and as 1 categorical or binary omics. 
+#' @param omicType Vector which indicates the type of data of omics introduced in \code{regulatoryData}. The user should code as 0 numeric omics and as 1 categorical or binary omics. 
 #' By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.
 #' @param condition Data frame describing the condition or phenotype to which considered samples belong. Rows must be the samples (columns
-#' in \code{\link{targetData}}) and columns must be the conditions or phenotypes to be included in the model (e.g., treatment, etc.).
+#' in \code{targetData}) and columns must be the conditions or phenotypes to be included in the model (e.g., treatment, etc.).
 #' @param clinic Data frame with all clinical variables to consider, with samples in rows and variables in columns.
-#' @param clinicType Vector which indicates the type of data of variables introduced in \code{\link{clinic}}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
+#' @param clinicType Vector which indicates the type of data of variables introduced in \code{clinic}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
 #' By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.
 #' @param minVariation  For numerical regulators, it specifies the minimum change required across conditions to retain the regulator in 
 #' the regression models. In the case of binary regulators, if the proportion of the most common value is equal to or inferior this value, 
@@ -61,18 +61,18 @@ options(stringsAsFactors = FALSE)
 #' \item Perm : Applies a resampling technique for the calculation of the significance of the coefficients in Partial Least Squares (PLS) models in which the response variable is permuted 100 times to obtain the distribution of the coefficients and compute then their associated p-value.
 #' }
 #' By default, Jack.
-#' @param alfa Significance level for variable selection in PLS1 and PLS2 \code{\link{method}}. By default, 0.05.
-#' @param vip Value of VIP above which a variable can be considered significant in addition to the computed p-value in \code{\link{varSel}}. By default, 0.8.
+#' @param alfa Significance level for variable selection in PLS1 and PLS2 \code{method}. By default, 0.05.
+#' @param vip Value of VIP above which a variable can be considered significant in addition to the computed p-value in \code{varSel}. By default, 0.8.
 #' @param method Model to be fitted. Two options:
 #' \itemize{
-#' \item PLS1 : Applies a Partial Least Squares (PLS) model, one for each of the features in the target omic of \code{\link{targetData}}.
-#' \item PLS2 : Applies a PLS model to all features of the target omic simultaneously, only possible when \code{\link{associations}}= NULL.
+#' \item PLS1 : Applies a Partial Least Squares (PLS) model, one for each of the features in the target omic of \code{targetData}.
+#' \item PLS2 : Applies a PLS model to all features of the target omic simultaneously, only possible when \code{associations}= NULL.
 #' }
 #' By default, PLS1.
 #' @param parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter. Parallelization is only implemented for MLR with EN variable selection and PLS methods.
 #' @return List containing the following elements:
 #' \itemize{
-#' \item ResultsPerTargetF : List with as many elements as features of the target omic in \code{\link{targetData}}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
+#' \item ResultsPerTargetF : List with as many elements as features of the target omic in \code{targetData}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
 #'                    detailed information about all regulators, and regulators identified as relevant (in MLR scenario) or significant (in PLS scenarios).
 #' \item GlobalSummary : List with information about the fitted models, including model metrics, information about regulators, features of the target omic without models, regulators, master regulators and hub target features.
 #' \item Arguments : List containing all the arguments used to generate the models.                
@@ -139,7 +139,7 @@ GetPLS = function(targetData,
   # Not possible to apply a PLS2 when associations matrix is provided
   if(!is.null(associations)){
     if(method=='PLS2'){
-      warning('WARNING: In PLS2 associations will only be used to reduce regulatoryData to those regulators present in associations, it won’t be used to set specific target feature regulator associations')
+      warning('WARNING: In PLS2 associations will only be used to reduce regulatoryData to those regulators present in associations, it will not be used to set specific target feature regulator associations')
       #Reduce regulatoryData to the ones present in associations
       regulatoryData = lapply(names(associations), function(x) regulatoryData[[x]][rownames(regulatoryData[[x]]) %in% associations[[x]][, 2], ,drop=FALSE])
       names(regulatoryData) = names(associations)
@@ -539,11 +539,11 @@ GetPLS = function(targetData,
     if (nrow(des.mat2)<7){cross = nrow(des.mat)-2}else{cross =7}
     myPLS = try(suppressWarnings( ropls::opls(des.mat2, Y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0)),silent = TRUE)
     
-    if(class(myPLS)=='try-error' || length(myPLS@modelDF)==0){
+    if(inherits(myPLS,'try-error') || length(myPLS@modelDF)==0){
       myPLS = try(suppressWarnings( ropls::opls(des.mat2, Y, info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=1)), silent = TRUE)
     }
     
-    if (class(myPLS)=='try-error' || length(myPLS@modelDF)==0){
+    if (inherits(myPLS,'try-error') || length(myPLS@modelDF)==0){
       
       myPLS = NULL
       
@@ -656,11 +656,11 @@ GetPLS = function(targetData,
 
   targetFsNosig = names(which(GlobalSummary$GoodnessOfFit[,6]==0))
   targetFssig = setdiff(rownames(GlobalSummary$GoodnessOfFit), targetFsNosig)
-  GlobalSummary$GoodnessOfFit = GlobalSummary$GoodnessOfFit[targetFssig,]
+  GlobalSummary$GoodnessOfFit = GlobalSummary$GoodnessOfFit[targetFssig,,drop=FALSE]
   
   targetFsNoreg = rownames(GlobalSummary$GoodnessOfFit)[is.na(rowSums(GlobalSummary$GoodnessOfFit))]
   targetFsreg = setdiff(rownames(GlobalSummary$GoodnessOfFit), targetFsNoreg)
-  GlobalSummary$GoodnessOfFit = GlobalSummary$GoodnessOfFit[targetFsreg,]
+  GlobalSummary$GoodnessOfFit = GlobalSummary$GoodnessOfFit[targetFsreg,, drop=FALSE]
   
   #Calculate GlobalRegulators
   m_sig_reg<-lapply(ResultsPerTargetF, function(x) x$significantRegulators)
@@ -838,11 +838,11 @@ ResultsPerTargetF.i<-function(targetF,GlobalSummary,regulatoryData,associations,
         if (nrow(des.mat2)<7){cross = nrow(des.mat2)-2}else{cross =7}
         myPLS = try(suppressWarnings(ropls::opls(des.mat2[,-1,drop=FALSE],scale(des.mat2[,1],scale=scale,center=center) , info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0)),silent = TRUE)
         
-        if(class(myPLS)=='try-error' || length(myPLS@modelDF)==0){
+        if(inherits(myPLS,'try-error') || length(myPLS@modelDF)==0){
           myPLS = try(suppressWarnings(ropls::opls(des.mat2[,-1,drop=FALSE], scale(des.mat2[,1],scale=scale,center=center), info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=1)), silent = TRUE)
         }
         
-        if (class(myPLS)=='try-error' || length(myPLS@modelDF)==0){
+        if (inherits(myPLS,'try-error') || length(myPLS@modelDF)==0){
           
           myPLS = NULL
           
@@ -877,10 +877,10 @@ ResultsPerTargetF.i<-function(targetF,GlobalSummary,regulatoryData,associations,
           #Recalcular los parametros con las variables seleccionadas
           if(length(sigvariables)>0) {
             fPLS = try(suppressWarnings(ropls::opls(des.mat2[,sigvariables,drop=FALSE], scale(des.mat2[,1],scale=scale,center=center), info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI = 0)),silent=TRUE)
-            if(class(fPLS)=='try-error' || length(fPLS@modelDF)==0){
+            if(inherits(fPLS,'try-error') || length(fPLS@modelDF)==0){
               fPLS = try(suppressWarnings(ropls::opls(des.mat2[,sigvariables,drop=FALSE], scale(des.mat2[,1],scale=scale,center=center), info.txtC = 'none', fig.pdfC='none', scaleC = 'none', crossvalI = cross, permI=0, predI=1)), silent = TRUE)
             } 
-            if(class(fPLS)!='try-error' && length(fPLS@modelDF)!=0){
+            if(!inherits(fPLS,'try-error') && length(fPLS@modelDF)!=0){
               myPLS = fPLS}
           } 
           

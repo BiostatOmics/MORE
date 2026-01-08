@@ -7,7 +7,7 @@
 scale_color_biostat(palette = "main", continuous = FALSE, reverse = FALSE, ...)
 }
 \arguments{
-\item{palette}{A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "cblindfriendly", "sunshine", "hot", "warm" and "cold" (Default: "main").}
+\item{palette}{A character string specifying the name of the desired palette from the `biostat_palettes`. Available options include: "main", "complete", "cblindfriendly", "sunshine", "hot", "warm", "grass" and "oficial" (Default: "main").}
 
 \item{continuous}{A logical value indicating whether the color aesthetic represents continuous data (Default: `FALSE`).}
 

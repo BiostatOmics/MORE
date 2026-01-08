@@ -40,7 +40,7 @@ isBin <-function(x){
 
 isBinclinic <-function(x){
   
-  if(class(x)=='character'){
+  if(inherits(x,'character')){
     return(1)
   }
   else if(length(unique(x))==2){
@@ -65,17 +65,17 @@ isBinclinic <-function(x){
 #' transcription factors, methylation, etc.). The names of the list will represent the omics. Each element in 
 #' the list should be a data frame with 2 columns (optionally 3), describing the potential interactions between target omic features
 #' and regulators for that omic. First column must contain the target omic features (the ones of 
-#' \code{\link{targetData}} object), second column must contain the regulators, and an optional third column can
+#' \code{targetData} object), second column must contain the regulators, and an optional third column can
 #' be added to describe the type of interaction (e.g., for methylation, if a CpG site is located in
 #' the promoter region of the gene, in the first exon, etc.). If the user lacks prior knowledge of the potential regulators, they can set the parameter to NULL. 
-#' In this case, all regulators in \code{\link{regulatoryData}} will be treated as potential regulators for all target omic features. In this case, for computational efficiency, it is recommended to use PLS2 \code{\link{method}}.
+#' In this case, all regulators in \code{regulatoryData} will be treated as potential regulators for all target omic features. In this case, for computational efficiency, it is recommended to use PLS2 \code{method}.
 #' Additionally, if the users have prior knowledge for certain omics and want to set other omics to NULL, they can do so.
-#' @param omicType Vector which indicates the type of data of omics introduced in \code{\link{regulatoryData}}. The user should code as 0 numeric omics and as 1 categorical or binary omics. 
+#' @param omicType Vector which indicates the type of data of omics introduced in \code{regulatoryData}. The user should code as 0 numeric omics and as 1 categorical or binary omics. 
 #' By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.
 #' @param condition Data frame describing the condition or phenotype to which considered samples belong. Rows must be the samples (columns
-#' in \code{\link{targetData}}) and columns must be the conditions or phenotypes to be included in the model (e.g., treatment, etc.).
+#' in \code{targetData}) and columns must be the conditions or phenotypes to be included in the model (e.g., treatment, etc.).
 #' @param clinic Data frame with all clinical variables to consider, with samples in rows and variables in columns.
-#' @param clinicType Vector which indicates the type of data of variables introduced in \code{\link{clinic}}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
+#' @param clinicType Vector which indicates the type of data of variables introduced in \code{clinic}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
 #' By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.
 #' @param minVariation  For numerical regulators, it specifies the minimum change required across conditions to retain the regulator in 
 #' the regression models. In the case of binary regulators, if the proportion of the most common value is equal to or inferior this value, 
@@ -108,26 +108,26 @@ isBinclinic <-function(x){
 #' \item A vector with the mixing parameters to try. The one that optimizes the mean cross-validated error when optimizing the lambda values will be used.
 #' }
 #' By default, NULL.
-#' @param correlation  Value to determine the presence of collinearity between two regulators when using the MLR \code{\link{method}}. By default, 0.7.
+#' @param correlation  Value to determine the presence of collinearity between two regulators when using the MLR \code{method}. By default, 0.7.
 #' @param groupingISGL Type of approach to take for creating the groups for the Iterative Sparse Group Lasso regularization. There are two options:
 #' \itemize{
 #' \item MF_X: Takes the same approach as in the multicollinearity filter. Grouping the variables which correlate more than X. E.g: MF_0.7 groups variables in the same groups when they are correlated more than 0.7. By default, MF_0.7. 
 #' \item PCA_X: Extracts as many PCA components to explain X percent of the variability of the data and assigns the variables to the component in which they had the highest loadings. 
 #' }
-#' @param alfa Significance level for variable selection in PLS1 and PLS2 \code{\link{method}}. By default, 0.05.
-#' @param vip Value of VIP above which a variable can be considered significant in addition to the computed p-value in \code{\link{varSel}}. By default, 0.8.
+#' @param alfa Significance level for variable selection in PLS1 and PLS2 \code{method}. By default, 0.05.
+#' @param vip Value of VIP above which a variable can be considered significant in addition to the computed p-value in \code{varSel}. By default, 0.8.
 #' @param method Model to be fitted. Three options:
 #' \itemize{
 #' \item MLR : Applies a Multiple Linear Regression (MLR).
-#' \item PLS1 : Applies a Partial Least Squares (PLS) model, one for each of the features in the target omic of \code{\link{targetData}}.
-#' \item PLS2 : Applies a PLS model to all features of the target omic simultaneously, only possible when \code{\link{associations}}= NULL.
+#' \item PLS1 : Applies a Partial Least Squares (PLS) model, one for each of the features in the target omic of \code{targetData}.
+#' \item PLS2 : Applies a PLS model to all features of the target omic simultaneously, only possible when \code{associations}= NULL.
 #' }
 #' By default, MLR.
 #' @param parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter. Parallelization is only implemented for MLR with EN variable selection and PLS methods.
 #' @param seed Sets the seed to guaranty reproducibility of the results. By default, 123.
 #' @return List containing the following elements:
 #' \itemize{
-#' \item ResultsPerTargetF : List with as many elements as features of the target omic in \code{\link{targetData}}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
+#' \item ResultsPerTargetF : List with as many elements as features of the target omic in \code{targetData}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
 #'                    detailed information about all regulators, and regulators identified as relevant (in MLR scenario) or significant (in PLS scenarios).
 #' \item GlobalSummary : List with information about the fitted models, including model metrics, information about regulators, features of the target omic without models, regulators, master regulators and hub target features.
 #' \item Arguments : List containing all the arguments used to generate the models.                

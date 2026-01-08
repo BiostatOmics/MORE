@@ -24,7 +24,7 @@ oraMORE(
 
 \item{byOmic}{If provided (it must follow the same nomenclature that in regulatoryData), it performs the ORA to the regulators of the specified omic. Incompatible with other methodologies specified in byHubs parameter. By default, NULL.}
 
-\item{annotation}{Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third}
+\item{annotation}{Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third.}
 
 \item{alpha}{The adjusted pvalue cutoff to consider}
 

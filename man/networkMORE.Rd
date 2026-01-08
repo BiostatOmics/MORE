@@ -28,7 +28,7 @@ networkMORE(
 
 \item{pathway}{If provided, the function will print the regulatory network involved in the specified pathway instead of the entire regulatory network. By default, NULL.}
 
-\item{annotation}{Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.}
+\item{annotation}{Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.}
 
 \item{save}{If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.}
 }

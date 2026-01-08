@@ -35,21 +35,21 @@ the list should be a data matrix with omic regulators in rows and samples in col
 transcription factors, methylation, etc.). The names of the list will represent the omics. Each element in 
 the list should be a data frame with 2 columns (optionally 3), describing the potential interactions between target omic features
 and regulators for that omic. First column must contain the target omic features (the ones of 
-\code{\link{targetData}} object), second column must contain the regulators, and an optional third column can
+\code{targetData} object), second column must contain the regulators, and an optional third column can
 be added to describe the type of interaction (e.g., for methylation, if a CpG site is located in
 the promoter region of the gene, in the first exon, etc.). If the user lacks prior knowledge of the potential regulators, they can set the parameter to NULL. 
-In this case, all regulators in \code{\link{regulatoryData}} will be treated as potential regulators for all target omic features. In this case, for computational efficiency, it is recommended to use PLS2 \code{\link{method}}.
+In this case, all regulators in \code{regulatoryData} will be treated as potential regulators for all target omic features. In this case, for computational efficiency, it is recommended to use PLS2 \code{method}.
 Additionally, if the users have prior knowledge for certain omics and want to set other omics to NULL, they can do so.}
 
-\item{omicType}{Vector which indicates the type of data of omics introduced in \code{\link{regulatoryData}}. The user should code as 0 numeric omics and as 1 categorical or binary omics. 
+\item{omicType}{Vector which indicates the type of data of omics introduced in \code{regulatoryData}. The user should code as 0 numeric omics and as 1 categorical or binary omics. 
 By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.}
 
 \item{condition}{Data frame describing the condition or phenotype to which considered samples belong. Rows must be the samples (columns
-in \code{\link{targetData}}) and columns must be the conditions or phenotypes to be included in the model (e.g., treatment, etc.).}
+in \code{targetData}) and columns must be the conditions or phenotypes to be included in the model (e.g., treatment, etc.).}
 
 \item{clinic}{Data frame with all clinical variables to consider, with samples in rows and variables in columns.}
 
-\item{clinicType}{Vector which indicates the type of data of variables introduced in \code{\link{clinic}}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
+\item{clinicType}{Vector which indicates the type of data of variables introduced in \code{clinic}. The user should code as 0 numeric variables and as 1 categorical or binary variables. 
 By default is set to NULL. In this case, the data type will be predicted automatically. However, the user must verify the prediction and manually input the vector if incorrect.}
 
 \item{epsilon}{Convergence threshold for coordinate descent algorithm in Elasticnet. Default value, 1e-5.}
@@ -62,7 +62,7 @@ the regulator is considered to have low variation and will be excluded from the 
 value to apply the same filter to all omics, provide a vector of the same length as omics if they want to specify different levels for each omics, 
 or use 'NA' when they want to apply a minimum variation filter but are uncertain about the threshold. By default, 0.}
 
-\item{correlation}{Value to determine the presence of collinearity between two regulators when using the MLR \code{\link{method}}. By default, 0.7.}
+\item{correlation}{Value to determine the presence of collinearity between two regulators when using the MLR \code{method}. By default, 0.7.}
 
 \item{scaleType}{Type of scaling to be applied. Four options:
 \itemize{
@@ -95,7 +95,7 @@ By default, NULL.}
 \value{
 List containing the following elements:
 \itemize{
-\item ResultsPerTargetF : List with as many elements as features of the target omic in \code{\link{targetData}}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
+\item ResultsPerTargetF : List with as many elements as features of the target omic in \code{targetData}. For each feature, it includes information about the feature values, considered variables, estimated coefficients,
                    detailed information about all regulators, and regulators identified as relevant (in MLR scenario) or significant (in PLS scenarios).
 \item GlobalSummary : List with information about the fitted models, including model metrics, information about regulators, features of the target omic without models, regulators, master regulators and hub target features.
 \item Arguments : List containing all the arguments used to generate the models.                

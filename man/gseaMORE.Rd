@@ -17,7 +17,7 @@ gseaMORE(
 
 \item{outputRegincond2}{Output object of running RegulationInCondition function for other group different to the previous. By default, NULL.}
 
-\item{annotation}{Annotation matrix with target features in the first column, GO terms in the second and GO term description in the third}
+\item{annotation}{Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third.}
 
 \item{alpha}{The adjusted pvalue cutoff to consider}
 

@@ -4,7 +4,7 @@
 \alias{summary.MORE}
 \title{summary}
 \usage{
-\method{summary}{MORE}(object, plot.more = FALSE)
+\method{summary}{MORE}(object, plot.more = FALSE, ...)
 }
 \arguments{
 \item{object}{MORE object obtained from applying \link{more} function.}
