@@ -8,7 +8,7 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 biocViews: Software
-Imports: psych, igraph (>= 2.0.1), MASS, glmnet, car, ltm, ropls, ggplot2 (>= 3.5.2, < 4.0.0), RCy3, clusterProfiler, sglfast, furrr, ComplexUpset (>= 1.3.3), UpSetR, future, purrr, scales, methods
+Imports: psych, igraph (>= 2.0.1), MASS, glmnet, car, ltm, ropls, ggplot2 (<= 3.5.2), RCy3, clusterProfiler, sglfast, furrr, ComplexUpset (>= 1.3.3), UpSetR, future, purrr, scales, methods
 Remotes: cytoscape/RCy3, jlaria/sglfast
 Maintainer: Maider Aguerralde Martin <magumar2@posgrado.upv.es>
 RoxygenNote: 7.3.2
