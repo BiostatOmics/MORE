@@ -17,6 +17,7 @@ Currently, the package can be installed directly from GitHub using the `devtools
 
 Although all dependencies should install automatically, you can manually install them if the process fails:
 
+* ggplot2
 * glmnet
 * igraph
 * MASS
@@ -33,6 +34,9 @@ if (!require("BiocManager", quietly = TRUE))
 
 BiocManager::install(c("graph", "ropls", "clusterProfiler"))
 ```
+
+**Attention!** Due to incompatibilities between recent versions of **ggplot2** (version ≥ 4.0.0) and the **ComplexUpset** package, **MORE** requires **ggplot2 version 3.5.2 or lower** to ensure that all plotting functions work correctly, including `differentialRegPlot()`.
+
 
 ## Usage
 
