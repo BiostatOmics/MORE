@@ -433,96 +433,96 @@ FilterRegulationPerCondition <- function(output, outputRegpcond, filterR2 = 0){
   return(filtered_outputRegpcond)
 }
 
-#' BetaTest
-#'
-#' \code{BetaTest} Function to test if the coefficients for each condition are statistically different from zero.
-#' 
-#' @param output Output object of \link{more} function when MLR model is used.
-#' @param outputRegpcond Output object of \link{RegulationPerCondition} function.
-#' @param alfa Significance level. By default, 0.05.
-#' 
-#' @return Modified outputRegpcond table with zeros in the coefficients that did not present statistically significant differences.
-#'
-#' @export
+# BetaTest
+# 
+# \code{BetaTest} Function to test if the coefficients for each condition are statistically different from zero.
+# 
+# @param output Output object of \link{more} function when MLR model is used.
+# @param outputRegpcond Output object of \link{RegulationPerCondition} function.
+# @param alfa Significance level. By default, 0.05.
+# 
+# @return Modified outputRegpcond table with zeros in the coefficients that did not present statistically significant differences.
+# 
+#
 
-BetaTest = function(output, outputRegpcond, alfa =0.05){
-  
-  family = gaussian()
-  #Add a progressbar
-  pb = txtProgressBar(min = 0, max = length(unique(outputRegpcond$targetF)), style = 3)
-  
-  for (mytargetF in unique(outputRegpcond$targetF)){
-    setTxtProgressBar(pb, value = which(unique(outputRegpcond$targetF)==mytargetF))
-    # Coeficientes distintos de 0 en todas las columnas: significa que tendran una suma y debera hacerse el test.
-    mycoeffs = outputRegpcond[outputRegpcond[,"targetF"] == mytargetF,]
-    mycoeffs = mycoeffs[, c(1,2,5:ncol(mycoeffs))]
-    #Hay que eliminar aquellas observaciones cuyos betas sean todos cero mientras que no son cero en el grupo de referencia
-    
-    mycoeffs = mycoeffs[which(apply(mycoeffs[,5:ncol(mycoeffs), drop=FALSE], 1, sum)!=0),, drop=FALSE]
-    
-    # Si todos los reguladores tienen interseccion (no aparecen solos), no habra suma de coeficientes y dara fallo.
-    # Pongo el siguiente if para controlar esto.
-    if(dim(mycoeffs)[1] != 0){
-      
-      # Comparo que reguladores tienen coeficientes distintos en cada grupo: eso significara que ha habido interaccion y aparece solo en el modelo,
-      # entonces habra una suma de coeficientes.
-      # El primero es el referencial, comparo con el. Lo he intentado con apply, devuelve cada elemento si es TRUE o FALSE y yo quiero la fila.
-      # También con which() pero no devuelve
-      # la posicion de la fila.
-      betas = NULL
-      for(j in 1:nrow(mycoeffs)){
-        if(any(mycoeffs[j,4] != mycoeffs[j, 5:ncol(mycoeffs)])){betas = rbind(betas, mycoeffs[j,])}
-      }
-      
-      # Hay suma de coeficientes.
-      if(!is.null(betas)){
-        mySignificatives = rownames(output$ResultsPerTargetF[[mytargetF]]$coefficients)[-1]
-        mySigni = gsub("`", "", mySignificatives)
-        myY = output$ResultsPerTargetF[[mytargetF]]$Y[,1]
-        myX = output$ResultsPerTargetF[[mytargetF]]$X
-        myX = myX[, mySigni]
-        
-        for(i in 1:nrow(betas)){
-          
-          # Para tener en cuenta si es omica_mc_R.
-          if(betas[i,"representative"] == ""){
-            myRegulator = betas[i, "regulator"]
-          } else {
-            myRegulator = betas[i, "representative"]
-          }
-          
-          aquitar = mySignificatives[grep(myRegulator, mySignificatives)]
-          group = unlist(strsplit(aquitar, ":", fixed = TRUE))
-          group = gsub("`",  "",group[grep("Group", group)])
-          
-          # Modelo GLM
-          mymodel = glm(myY~., data = myX, family = family)
-          myHyp = paste0("`",paste(aquitar, collapse = "+"), "` = 0")
-          pvalue = try(suppressWarnings(linearHypothesis(mymodel, c(myHyp), test = "Chisq")$"Pr(>Chisq)"[2]), silent = TRUE)
-          
-          if(inherits(pvalue, "try-error")){
-            pvalue = NA
-          } else{
-            if(pvalue > alfa){
-              # Para escoger la fila correcta segun el nombre del regulador.
-              if(betas[i,"representative"] == ""){
-                outputRegpcond[outputRegpcond[, "targetF"] == mytargetF & outputRegpcond[, "regulator"] == myRegulator, group] = 0
-              } else {
-                outputRegpcond[outputRegpcond[, "targetF"] == mytargetF & outputRegpcond[, "representative"] == myRegulator, group] = 0
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  close(pb)
-  
-  #Remove the regulations that show 0 coefficient in all the Groups
-  outputRegpcond = outputRegpcond[!apply(outputRegpcond[, 6:ncol(outputRegpcond)], 1, function(x) all(x == 0)), ]
-  
-  return(outputRegpcond)
-}
+# BetaTest = function(output, outputRegpcond, alfa =0.05){
+#   
+#   family = gaussian()
+#   #Add a progressbar
+#   pb = txtProgressBar(min = 0, max = length(unique(outputRegpcond$targetF)), style = 3)
+#   
+#   for (mytargetF in unique(outputRegpcond$targetF)){
+#     setTxtProgressBar(pb, value = which(unique(outputRegpcond$targetF)==mytargetF))
+#     # Coeficientes distintos de 0 en todas las columnas: significa que tendran una suma y debera hacerse el test.
+#     mycoeffs = outputRegpcond[outputRegpcond[,"targetF"] == mytargetF,]
+#     mycoeffs = mycoeffs[, c(1,2,5:ncol(mycoeffs))]
+#     #Hay que eliminar aquellas observaciones cuyos betas sean todos cero mientras que no son cero en el grupo de referencia
+#     
+#     mycoeffs = mycoeffs[which(apply(mycoeffs[,5:ncol(mycoeffs), drop=FALSE], 1, sum)!=0),, drop=FALSE]
+#     
+#     # Si todos los reguladores tienen interseccion (no aparecen solos), no habra suma de coeficientes y dara fallo.
+#     # Pongo el siguiente if para controlar esto.
+#     if(dim(mycoeffs)[1] != 0){
+#       
+#       # Comparo que reguladores tienen coeficientes distintos en cada grupo: eso significara que ha habido interaccion y aparece solo en el modelo,
+#       # entonces habra una suma de coeficientes.
+#       # El primero es el referencial, comparo con el. Lo he intentado con apply, devuelve cada elemento si es TRUE o FALSE y yo quiero la fila.
+#       # También con which() pero no devuelve
+#       # la posicion de la fila.
+#       betas = NULL
+#       for(j in 1:nrow(mycoeffs)){
+#         if(any(mycoeffs[j,4] != mycoeffs[j, 5:ncol(mycoeffs)])){betas = rbind(betas, mycoeffs[j,])}
+#       }
+#       
+#       # Hay suma de coeficientes.
+#       if(!is.null(betas)){
+#         mySignificatives = rownames(output$ResultsPerTargetF[[mytargetF]]$coefficients)[-1]
+#         mySigni = gsub("`", "", mySignificatives)
+#         myY = output$ResultsPerTargetF[[mytargetF]]$Y[,1]
+#         myX = output$ResultsPerTargetF[[mytargetF]]$X
+#         myX = myX[, mySigni]
+#         
+#         for(i in 1:nrow(betas)){
+#           
+#           # Para tener en cuenta si es omica_mc_R.
+#           if(betas[i,"representative"] == ""){
+#             myRegulator = betas[i, "regulator"]
+#           } else {
+#             myRegulator = betas[i, "representative"]
+#           }
+#           
+#           aquitar = mySignificatives[grep(myRegulator, mySignificatives)]
+#           group = unlist(strsplit(aquitar, ":", fixed = TRUE))
+#           group = gsub("`",  "",group[grep("Group", group)])
+#           
+#           # Modelo GLM
+#           mymodel = glm(myY~., data = myX, family = family)
+#           myHyp = paste0("`",paste(aquitar, collapse = "+"), "` = 0")
+#           pvalue = try(suppressWarnings(linearHypothesis(mymodel, c(myHyp), test = "Chisq")$"Pr(>Chisq)"[2]), silent = TRUE)
+#           
+#           if(inherits(pvalue, "try-error")){
+#             pvalue = NA
+#           } else{
+#             if(pvalue > alfa){
+#               # Para escoger la fila correcta segun el nombre del regulador.
+#               if(betas[i,"representative"] == ""){
+#                 outputRegpcond[outputRegpcond[, "targetF"] == mytargetF & outputRegpcond[, "regulator"] == myRegulator, group] = 0
+#               } else {
+#                 outputRegpcond[outputRegpcond[, "targetF"] == mytargetF & outputRegpcond[, "representative"] == myRegulator, group] = 0
+#               }
+#             }
+#           }
+#         }
+#       }
+#     }
+#   }
+#   close(pb)
+#   
+#   #Remove the regulations that show 0 coefficient in all the Groups
+#   outputRegpcond = outputRegpcond[!apply(outputRegpcond[, 6:ncol(outputRegpcond)], 1, function(x) all(x == 0)), ]
+#   
+#   return(outputRegpcond)
+# }
 
 
 #' RegulationInCondition
@@ -2018,7 +2018,7 @@ plotScores<-function(output, targetF,axe1=1,axe2=2){
 #' \code{summary.MORE} Function to be applied to MORE object.
 #' 
 #' @param object MORE object obtained from applying \link{more} function. 
-#' @param plot.more If TRUE top 10 global regulators are plotted against the target features they regulate. By default, FALSE.
+#' @param plot.more If TRUE, the top 10 global regulators will be plotted against the target features they regulate. By default, FALSE. This option can be very time-consuming if global regulators regulate more than 50 target features and is therefore not recommended unless the user knows that only a small number of target features are involved. Instead, it is recommended to first use the summary function with the plot.more parameter set to FALSE to verify that there are no more than 50 target feature–regulator associations. For visualizing specific regulatory relationships, the use of the \link{plotMORE} function is recommended.
 #' 
 #' @return Summary of more analysis.
 #' @export
@@ -2535,13 +2535,13 @@ differentialRegPlot = function(output, outputRegpcond){
 #'
 #' \code{networkMORE} Function to be applied to RegulationPerConidtion function output.
 #' 
-#' @param outputRegpcond Output object of RegulationPerCondition applied to MORE main function.
-#' @param cytoscape TRUE for plotting the network in Cytoscape. FALSE to plot the network in R. 
+#' @param outputRegpcond Output object of \link{RegulationPerCondition} applied to MORE main function.
+#' @param cytoscape If TRUE (default), the function plots the network in Cytoscape. For that, it is necessary to install RCy3 package and to maintain Cytoscape software opened while running the function. If FALSE, the network is plotted in R using igraph package and saves it so that the user can introduce it later to Cytoscape. This option is not recommended for plotting huge networks, as the visualization is complex.
 #' @param group1 Name of the group to take as reference in the differential network creation. It also can be used for creating networks of a specific group. If it is not provided the networks of all conditions will be plotted. By default, NULL.
 #' @param group2 Name of the group to compare to the reference in the differential network creation. By default, NULL.
-#' @param pc Percentile to consider to plot the most affecting regulators into the target omic. It must be a value comprissed between 0 and 1. By default, 0.
+#' @param pc Value between 0 and 1 for the proportion of significant/relevant regulators to be plotted in the network. When having networks with many nodes, users can decide to only plot the regulators with the highest coefficients in the models (in absolute value). By default, 0, which means that all significant/relevant regulators will be plotted.
 #' @param pathway If provided, the function will print the regulatory network involved in the specified pathway instead of the entire regulatory network. By default, NULL.
-#' @param annotation Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
+#' @param annotation Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
 #' @param save If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.
 #' @return Plot of the network induced from more.
 #' @export
@@ -2792,8 +2792,8 @@ ReguEnrich1regu = function(test, notTest, annotation, p.adjust.method = "fdr") {
 #' @param outputRegincond Output object of running RegulationInCondition function
 #' @param byHubs Indicates whether to perform the ORA for the Hub target features, TRUE, or for the target features regulated by the global regulators, FALSE. By default, TRUE.
 #' @param byOmic If provided (it must follow the same nomenclature that in regulatoryData), it performs the ORA to the regulators of the specified omic. Incompatible with other methodologies specified in byHubs parameter. By default, NULL.
-#' @param annotation Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third.
-#' @param alpha The adjusted pvalue cutoff to consider
+#' @param annotation Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
+#' @param alpha p-value cutoff to consider. By default, 0.05.
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
 #' @param parallel parallel If FALSE, MORE will be run sequentially. If TRUE, MORE will be run using parallelization with as many cores as the available ones minus one so the system is not overcharged. If the user wants to specify how many cores they want to use, they can also provide the number of cores to use in this parameter.
 #' 
@@ -2886,9 +2886,9 @@ ORA.i = function(regulator, outputRegincond, reference, annotation, p.adjust.met
 #' \code{gseaMORE} Function to be applied to RegulationInCondition function output.
 #' 
 #' @param outputRegincond Output object of running RegulationInCondition function
-#' @param outputRegincond2 Output object of running RegulationInCondition function for other group different to the previous. By default, NULL.
-#' @param annotation Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third.
-#' @param alpha The adjusted pvalue cutoff to consider
+#' @param outputRegincond2 Object generated by the function \link{RegulationInCondition} for another group different from the previously considered. By default, NULL. If NULL, the analysis will be centered only in the study group, so the results will apply only to that group and will not mean the statistical differences between groups. If provided MORE computes and internal score comparing the number of significant regulators in both groups.
+#' @param annotation Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
+#' @param alpha p-value cutoff to consider. By default, 0.05.
 #' @param p.adjust.method One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none
 #' 
 #' @return Plot of the network induced from more.

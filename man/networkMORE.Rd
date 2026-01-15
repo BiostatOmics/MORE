@@ -16,19 +16,19 @@ networkMORE(
 )
 }
 \arguments{
-\item{outputRegpcond}{Output object of RegulationPerCondition applied to MORE main function.}
+\item{outputRegpcond}{Output object of \link{RegulationPerCondition} applied to MORE main function.}
 
-\item{cytoscape}{TRUE for plotting the network in Cytoscape. FALSE to plot the network in R.}
+\item{cytoscape}{If TRUE (default), the function plots the network in Cytoscape. For that, it is necessary to install RCy3 package and to maintain Cytoscape software opened while running the function. If FALSE, the network is plotted in R using igraph package and saves it so that the user can introduce it later to Cytoscape. This option is not recommended for plotting huge networks, as the visualization is complex.}
 
 \item{group1}{Name of the group to take as reference in the differential network creation. It also can be used for creating networks of a specific group. If it is not provided the networks of all conditions will be plotted. By default, NULL.}
 
 \item{group2}{Name of the group to compare to the reference in the differential network creation. By default, NULL.}
 
-\item{pc}{Percentile to consider to plot the most affecting regulators into the target omic. It must be a value comprissed between 0 and 1. By default, 0.}
+\item{pc}{Value between 0 and 1 for the proportion of significant/relevant regulators to be plotted in the network. When having networks with many nodes, users can decide to only plot the regulators with the highest coefficients in the models (in absolute value). By default, 0, which means that all significant/relevant regulators will be plotted.}
 
 \item{pathway}{If provided, the function will print the regulatory network involved in the specified pathway instead of the entire regulatory network. By default, NULL.}
 
-\item{annotation}{Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.}
+\item{annotation}{Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.}
 
 \item{save}{If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.}
 }

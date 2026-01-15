@@ -24,9 +24,9 @@ oraMORE(
 
 \item{byOmic}{If provided (it must follow the same nomenclature that in regulatoryData), it performs the ORA to the regulators of the specified omic. Incompatible with other methodologies specified in byHubs parameter. By default, NULL.}
 
-\item{annotation}{Annotation matrix with target features in the first column, GO term accession in the second and GO term name in the third.}
+\item{annotation}{Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.}
 
-\item{alpha}{The adjusted pvalue cutoff to consider}
+\item{alpha}{p-value cutoff to consider. By default, 0.05.}
 
 \item{p.adjust.method}{One of holm, hochberg, hommel, bonferroni, BH, BY, fdr or none}
 

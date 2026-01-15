@@ -9,7 +9,7 @@
 \arguments{
 \item{object}{MORE object obtained from applying \link{more} function.}
 
-\item{plot.more}{If TRUE top 10 global regulators are plotted against the target features they regulate. By default, FALSE.}
+\item{plot.more}{If TRUE, the top 10 global regulators will be plotted against the target features they regulate. By default, FALSE. This option can be very time-consuming if global regulators regulate more than 50 target features and is therefore not recommended unless the user knows that only a small number of target features are involved. Instead, it is recommended to first use the summary function with the plot.more parameter set to FALSE to verify that there are no more than 50 target feature–regulator associations. For visualizing specific regulatory relationships, the use of the \link{plotMORE} function is recommended.}
 }
 \value{
 Summary of more analysis.
