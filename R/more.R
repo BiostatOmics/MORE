@@ -19,7 +19,7 @@ options(stringsAsFactors = FALSE)
 #' @import igraph
 #' @import MASS
 #' @import glmnet
-#' @import psych
+#' @importFrom psych phi
 #' @import car
 #' @import furrr
 #' @import ggplot2

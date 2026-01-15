@@ -684,18 +684,18 @@ plot.y2 <- function(x, yright, yleft,
   }
   
   if (!is.null(group_names)) {
+    
+    if (!is.null(yleftErrorValues)) {
+      y_max_total <- max(data$yleft + yleftErrorValues, na.rm = TRUE)
+    } else {
+      y_max_total <- max(data$yleft, na.rm = TRUE)
+    }
+    
+    y_text = y_max_total
+    # 3. Calculate horizontal centers
     num_groups = length(group_names)
     group_position = seq(min(data$x), max(data$x), length.out = num_groups + 1)
     group_centers = head(group_position, -1) + diff(group_position) / 2
-    
-    usr <- range(data$yleft)  # usr[3] es el límite inferior del eje Y, usr[4] es el superior
-    y_text <- usr[2] + (usr[2] - usr[1]) * 0.1
-    
-    group_centers <- group_centers[group_centers >= min(data$x) & group_centers <= max(data$x)]
-    
-    if (y_text > max(data$yleft)) {
-      y_text <- max(data$yleft) - (max(data$yleft) - min(data$yleft)) * 0.005
-    }
     
     group_labels_df <- data.frame(
       x = group_centers,
@@ -704,7 +704,7 @@ plot.y2 <- function(x, yright, yleft,
     )
     
     p = p + geom_vline(xintercept = numLines, color = "black", linetype = "dashed", linewidth = 0.5) + # Dynamically add the group names above the plot
-      geom_text(data = group_labels_df, aes(x = x, y = y, label = label), color = "black", size = 3) 
+      geom_text(data = group_labels_df, aes(x = x, y = y, label = label), vjust = 1, color = "black", size = 3) 
     
   }
   
@@ -918,7 +918,6 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
   names(myreplicates) = colnames(MLRoutput$arguments$targetData)
   myrepliUni = unique(myreplicates)
   
-  
   if (max(table(myreplicates)) == 1) {
     replicates = FALSE
   } else {
@@ -1001,7 +1000,9 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
           }
           numLines = which(diff(num2) != 0)+0.5
         }
-      }
+      }else{
+        group_names = unique(sort(MLRoutput$arguments$groups))
+      } 
       
       errorValues = getErrorValues(targetFValues, myreplicates)
       targetFValues = tapply(targetFValues, myreplicates, mean)
@@ -1194,7 +1195,10 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
               }
               numLines = which(diff(num2) != 0)+0.5
             }
+          } else{
+            group_names = unique(sort(MLRoutput$arguments$groups))
           }
+          
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
           reguValues = tapply(reguValues, myreplicates, mean)
           reguValues = reguValues[myrepliUni]
@@ -1271,7 +1275,9 @@ plotMLR = function (MLRoutput, targetF, regulator = NULL, reguValues = NULL, plo
             }
             numLines = which(diff(num2) != 0)+0.5
           }
-        }
+        } else{
+          group_names = unique(sort(MLRoutput$arguments$groups))
+        } 
         
         errorValuesRegu = getErrorValues(reguValues, myreplicates)
         reguValues = tapply(reguValues, myreplicates, mean, na.rm = TRUE)
@@ -1512,7 +1518,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
           }
           numLines = which(diff(num2) != 0)+0.5
         }
-      }
+      } else{group_names = unique(sort(PLSoutput$arguments$groups))}
       
       errorValues = getErrorValues(targetFValues, myreplicates)
       targetFValues = tapply(targetFValues, myreplicates, mean)
@@ -1703,7 +1709,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
               }
               numLines = which(diff(num2) != 0)+0.5
             }
-          }
+          } else{group_names = unique(sort(PLSoutput$arguments$groups))}
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
           reguValues = tapply(reguValues, myreplicates, mean)
           reguValues = reguValues[myrepliUni]
@@ -1777,7 +1783,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
             }
             numLines = which(diff(num2) != 0)+0.5
           }
-        }
+        } else{group_names = unique(sort(PLSoutput$arguments$groups))}
         
         errorValuesRegu = getErrorValues(reguValues, myreplicates)
         reguValues = tapply(reguValues, myreplicates, mean, na.rm = TRUE)
@@ -1841,7 +1847,7 @@ plotPLS = function (PLSoutput, targetF, regulator = NULL, reguValues = NULL, plo
               }
               numLines = which(diff(num2) != 0)+0.5
             }
-          }
+          }else{group_names = unique(sort(PLSoutput$arguments$groups))}
           
           errorValuesRegu = getErrorValues(reguValues, myreplicates)
           reguValues = tapply(reguValues, myreplicates, mean)

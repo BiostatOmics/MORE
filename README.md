@@ -20,10 +20,8 @@ Although all dependencies should install automatically, you can manually install
 * glmnet
 * igraph
 * MASS
-* psych
 * car
 * ltm
-* graph
 * ropls
 * clusterProfiler
 
