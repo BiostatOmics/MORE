@@ -2450,7 +2450,7 @@ differentialRegPlot = function(output, outputRegpcond){
   df = do.call(rbind, lapply(names(data_list), function(name) {
     parts <- strsplit(name, "_")[[1]]
     data.frame(
-      regulator = data_list[[name]],
+      regulator = if(length(data_list[[name]]!=0)) data_list[[name]] else '',
       group = parts[1],
       omic = parts[2],
       stringsAsFactors = FALSE
