@@ -2881,6 +2881,50 @@ ORA.i = function(regulator, outputRegincond, reference, annotation, p.adjust.met
   
 }
 
+#' oraPlot
+#'
+#' \code{oraPlot} Function to plot the ORA results of a specific regulator
+#' 
+#' @param outputORA Output object of running oraMORE function
+#' @param regulator Name of the regulator of the ORA plot the user wants to explore
+#' @param Sig Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
+#' @param n Number of pathways to visualize. In case there are more than 20 pathways to plot. By default, 10.
+#' 
+#' @return ORA plot of a specific regulator
+#' @export
+
+oraPlot <- function(outputORA, regulator, Sig = c("pval", "adjPval")[1], n = 10) {
+
+  df = outputORA[[regulator]]
+  
+  cols_to_fix = c("annotTest", "test", "annotNotTest", "notTest", "pval")
+  df[cols_to_fix] = lapply(df[cols_to_fix], as.numeric)
+  
+  df$GeneRatio = df$annotTest / df$test
+  df$RichFactor = df$annotTest / (df$annotTest + df$annotNotTest)
+  df$Info = df$termDescr
+  
+  df = df[order(df[[Sig]]), ]
+  
+  if (nrow(df) > 20) {
+    df = df[1:n, ]
+  }
+  
+  ggplot(df, aes(x = GeneRatio, y = reorder(Info, GeneRatio))) +
+    geom_point(aes(size = RichFactor, 
+                   color = .data[[Sig]])) +
+    scale_size_continuous(range = c(2, 5)) +
+    scale_color_gradient(low = "#90C433", high = "#2494B6") +
+    labs(title = paste("ORA:", regulator),
+         x = "Gene Ratio",
+         y = "Enriched Term") +
+    guides(size = guide_legend(title = "RichFactor", order = 2),
+           color = guide_colorbar(title = Sig, order = 1)) + 
+    theme_minimal() +
+    theme(axis.line = element_line(colour = "gray", linewidth = 0.6))
+}
+
+
 #' gseaMORE
 #'
 #' \code{gseaMORE} Function to be applied to RegulationInCondition function output.
