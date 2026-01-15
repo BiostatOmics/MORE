@@ -2893,9 +2893,9 @@ ORA.i = function(regulator, outputRegincond, reference, annotation, p.adjust.met
 #' @return ORA plot of a specific regulator
 #' @export
 
-oraPlot <- function(outputORA, regulator, Sig = c("pval", "adjPval")[1], n = 10) {
+oraPlot <- function(outputORA, regulator=NULL, Sig = c("pval", "adjPval")[1], n = 10) {
 
-  df = outputORA[[regulator]]
+  if(!is.null(regulator)) df = outputORA[[regulator]] else df = outputORA
   
   cols_to_fix = c("annotTest", "test", "annotNotTest", "notTest", "pval")
   df[cols_to_fix] = lapply(df[cols_to_fix], as.numeric)
