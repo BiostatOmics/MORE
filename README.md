@@ -23,20 +23,24 @@ Although all dependencies should install automatically, you can manually install
 * MASS
 * car
 * ltm
+* ComplexUpset
 * ropls
 * clusterProfiler
 
-Note that the last three dependencies are Bioconductor packages and must be installed using the BiocManager helper: 
+Note that the last two dependencies are Bioconductor packages and must be installed using the BiocManager helper: 
 
 ```r
 if (!require("BiocManager", quietly = TRUE))
     install.packages("BiocManager")
 
-BiocManager::install(c("graph", "ropls", "clusterProfiler"))
+BiocManager::install(c("ropls", "clusterProfiler"))
 ```
 
-**Attention!** Due to incompatibilities between recent versions of **ggplot2** (version ≥ 4.0.0) and the **ComplexUpset** package, **MORE** requires **ggplot2 version 3.5.2 or lower** to ensure that all plotting functions work correctly, including `differentialRegPlot()`.
+**Attention!** Due to incompatibilities between recent versions of **ggplot2** (version ≥ 4.0.0) and the **ComplexUpset** package, some plotting functions in MORE, including `differentialRegPlot()`, may not work correctly with the CRAN version of **ComplexUpset**. The latest development version of ComplexUpset on **GitHub** has resolved compatibility issues with recent versions of ggplot2. MORE installs ComplexUpset **automatically**. However, if you need to install it manually, please use the latest development version from GitHub to ensure full functionality:
 
+```r
+devtools::install_github("krassowski/complex-upset")
+```
 
 ## Usage
 
