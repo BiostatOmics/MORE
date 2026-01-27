@@ -4,7 +4,7 @@
 \alias{oraPlot}
 \title{oraPlot}
 \usage{
-oraPlot(outputORA, regulator, Sig = c("pval", "adjPval")[1], n = 10)
+oraPlot(outputORA, regulator = NULL, Sig = c("pval", "adjPval")[1], n = 10)
 }
 \arguments{
 \item{outputORA}{Output object of running oraMORE function}
