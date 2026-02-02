@@ -2564,7 +2564,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     
     #Save only four digits as it cannot be loaded greater in Cytoscape
     interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
-                              coef = round(df[,4],digits = 5), sign = ifelse(df[,4]>0,'p','n'))
+                              coef = as.numeric(format(round(df[,4], 4), scientific = FALSE)), sign = ifelse(df[,4]>0,'p','n'))
     
     ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
     
