@@ -46,3 +46,8 @@ devtools::install_github("krassowski/complex-upset")
 
 You can find the User Guide for the package in the vignettes folder or access it directly [here](https://github.com/BiostatOmics/MORE/blob/master/vignettes/UsersGuide.pdf). Furthermore, in the same folder we include a full step-by-step tutorial to run MORE (accessible [here](https://github.com/BiostatOmics/MORE/blob/master/vignettes/tutorial.html))
 
+## How to cite MORE
+
+Aguerralde-Martin M, Clemente-C´ıscar M, Conesa A, Tarazona S. MORE interpretable multi-omic regulatory networks to characterise phenotypes. Brief Bioinform. 2025; 26(3): bbaf270. doi:10.1093/bib/bbaf270.
+
+Paper available [here](https://academic.oup.com/bib/article/26/3/bbaf270/8169587)
