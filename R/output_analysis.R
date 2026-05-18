@@ -2561,12 +2561,17 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     #Data.frame of that network
     nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
                        omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
+    # If there is any duplicated id delate the targetF
+    nodes = nodes %>%
+      group_by(id) %>%
+      filter(!(n() > 1 & omic == "targetF")) %>%
+      ungroup()
     
     #Save only four digits as it cannot be loaded greater in Cytoscape
     interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
                               coef = as.numeric(format(round(df[,4], 4), scientific = FALSE)), sign = ifelse(df[,4]>0,'p','n'))
     
-    ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
+    ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = TRUE)
     
     return(ig)
   }
@@ -2593,9 +2598,19 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     if('targetF'%in% omic_c){
       i=grep('targetF', omic_c)
       nshaps[i]<-'RECTANGLE'
-    }
+    } 
+    
+    # Add direction 
+    RCy3::setEdgeSourceArrowShapeMapping(
+      table.column = 'sign',
+      table.column.values = c('n', 'p'),
+      shapes = c('T', 'ARROW'),
+      #mapping.type = 'd'
+    )
+    RCy3::setEdgeSourceArrowColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d'    )
     RCy3::setNodeShapeMapping('omic', table.column.values = omic_c, shapes = nshaps )
     RCy3::setEdgeColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d')
+    
     if(diff){
       RCy3::setEdgeLineStyleMapping('line',c('s','e','d','v','p'),c('SOLID','EQUAL_DASH','DOT','VERTICAL_SLASH','PARALLEL_LINES'))
     } 
@@ -2671,11 +2686,16 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       #Data.frame of that network
       nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
                          omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
+      # If there is any duplicated id delate the targetF
+      nodes = nodes %>%
+        group_by(id) %>%
+        filter(!(n() > 1 & omic == "targetF")) %>%
+        ungroup()
       
       interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
                                 sign = df[,8], line = df[,7])
       
-      ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
+      ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = TRUE)
       
       create_network(ig, paste0(colnames(outputRegpcond)[gr2], '-', colnames(outputRegpcond)[gr1]) ,diff = TRUE)
     }
@@ -2694,10 +2714,39 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
         if(save){
           igraph::write_graph(ig, format = 'gml', file = paste0(colnames(outputRegpcond)[ngroups[i]], '.gml'))
         } else{
-          igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
+          # igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
+          #                     vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
+          #                     edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'))
+          
+          fxLayout <- igraph::layout_with_fr(ig)
+          ig_pos <- igraph::subgraph.edges(ig, igraph::E(ig)[sign == "p"], delete.vertices = FALSE)
+          ig_neg <- igraph::subgraph.edges(ig, igraph::E(ig)[sign == "n"], delete.vertices = FALSE)
+          
+          
+          # Positive vertex
+          igraph::plot.igraph(ig_pos, 
+                              layout = fxLayout,
+                              vertex.label.cex = 0.3, 
+                              vertex.size = 3,
                               vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
-                              edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'))
-        }
+                              edge.color = "blue",
+                              edge.arrow.mode = 1,
+                              edge.arrow.size = 0.1,
+                              edge.arrow.width = 1)
+          # Negative vertex
+          igraph::plot.igraph(ig_neg, 
+                              layout = fxLayout,
+                              add = TRUE,
+                              vertex.size = 3,
+                              vertex.label = NA,
+                              vertex.color = "transparent",
+                              vertex.frame.color = "transparent",
+                              edge.color = "red",
+                              edge.arrow.mode = 1,
+                              edge.arrow.size = 0.001,
+                              edge.arrow.width = 200)
+          
+          }
         
       }
       
@@ -2708,9 +2757,36 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       if(save){
         igraph::write_graph(ig, format = 'gml', file = paste0(colnames(outputRegpcond)[ngroup], '.gml'))
       } else{
-        igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
+        # igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
+        #                     vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
+        #                     edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'))
+        fxLayout <- igraph::layout_with_fr(ig)
+        ig_pos <- igraph::subgraph.edges(ig, igraph::E(ig)[sign == "p"], delete.vertices = FALSE)
+        ig_neg <- igraph::subgraph.edges(ig, igraph::E(ig)[sign == "n"], delete.vertices = FALSE)
+        
+        
+        # Positive vertex
+        igraph::plot.igraph(ig_pos, 
+                            layout = fxLayout,
+                            vertex.label.cex = 0.3, 
+                            vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
-                            edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'))
+                            edge.color = "blue",
+                            edge.arrow.mode = 1,
+                            edge.arrow.size = 0.1,
+                            edge.arrow.width = 1)
+        # Negative vertex
+        igraph::plot.igraph(ig_neg, 
+                            layout = fxLayout,
+                            add = TRUE,
+                            vertex.size = 3,
+                            vertex.label = NA,
+                            vertex.color = "transparent",
+                            vertex.frame.color = "transparent",
+                            edge.color = "red",
+                            edge.arrow.mode = 1,
+                            edge.arrow.size = 0.001,
+                            edge.arrow.width = 200)
       }
       
     } else {
@@ -2732,6 +2808,11 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       #Data.frame of that network
       nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
                          omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
+      # If there is any duplicated id delate the targetF
+      nodes = nodes %>%
+        group_by(id) %>%
+        filter(!(n() > 1 & omic == "targetF")) %>%
+        ungroup()
       
       interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
                                 sign = df[,8], line = df[,7])
@@ -2741,10 +2822,37 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       if(save){
         igraph::write_graph(ig, format = 'gml', file = paste0(colnames(outputRegpcond)[gr2],'-',colnames(outputRegpcond)[gr1], '.gml'))
       } else{
-        igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
+        # igraph::plot.igraph(ig, vertex.label.cex = 0.3, vertex.size = 3,
+        #                     vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
+        #                     edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'),
+        #                     edge.lty = ifelse(igraph::edge_attr(ig)$line=='s','solid','dashed'))
+        fxLayout <- igraph::layout_with_fr(ig)
+        ig_pos <- igraph::subgraph.edges(ig, igraph::E(ig)[sign == "p"], delete.vertices = FALSE)
+        ig_neg <- igraph::subgraph.edges(ig, igraph::E(ig)[sign == "n"], delete.vertices = FALSE)
+        
+        
+        # Positive vertex
+        igraph::plot.igraph(ig_pos, 
+                            layout = fxLayout,
+                            vertex.label.cex = 0.3, 
+                            vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
-                            edge.color = ifelse(igraph::edge_attr(ig)$sign == 'p', 'blue','red'),
-                            edge.lty = ifelse(igraph::edge_attr(ig)$line=='s','solid','dashed'))
+                            edge.color = "blue",
+                            edge.arrow.mode = 1,
+                            edge.arrow.size = 0.1,
+                            edge.arrow.width = 1)
+        # Negative vertex
+        igraph::plot.igraph(ig_neg, 
+                            layout = fxLayout,
+                            add = TRUE,
+                            vertex.size = 3,
+                            vertex.label = NA,
+                            vertex.color = "transparent",
+                            vertex.frame.color = "transparent",
+                            edge.color = "red",
+                            edge.arrow.mode = 1,
+                            edge.arrow.size = 0.001,
+                            edge.arrow.width = 200)
       }
     }
   }
