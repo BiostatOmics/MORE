@@ -411,6 +411,10 @@ RegulationPerCondition = function(output, filterR2 = 0){
     
   }
   rownames(myresults)=NULL
+  # Remove prefix
+  prefix = paste0(names(output$arguments$omicType), "-" , collapse = "|")
+  myresults$regulator = gsub(prefix, "", myresults$regulator)
+  
   close(pb)
   return(myresults)
 }
