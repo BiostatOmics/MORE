@@ -2558,17 +2558,27 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     qc = quantile(abs(df[,4]),pc)[[1]]
     df = df[which(abs(df[,4])>=qc),,drop=FALSE]
     
+    # Define unique names
+    df = df %>% mutate(regomic = paste(omic, regulator, sep = "_"))
     #Data.frame of that network
-    nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
-                       omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
-    # If there is any duplicated id delate the targetF
-    nodes = nodes %>%
-      group_by(id) %>%
-      filter(!(n() > 1 & omic == "targetF")) %>%
+    nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,"regomic"])),
+                       omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regomic','omic')])[,2]))
+    # Filter targetF if duplicates
+    nodes = nodes %>% 
+      rowwise() %>%
+      mutate(label = sub(paste0(omic, "_"), "", id)) %>%
+      group_by(label) %>%
+      filter(!(n() == 2 & (omic == "targetF"))) %>%
       ungroup()
     
+    # Update the interactions if 'targetF' has been renamed.
+    mapeo_ids <- nodes$id
+    names(mapeo_ids) <- nodes$label
+    updatet_targets <- ifelse(df[,'targetF'] %in% names(mapeo_ids), 
+                              mapeo_ids[df[,'targetF']], 
+                              df[,'targetF'])
     #Save only four digits as it cannot be loaded greater in Cytoscape
-    interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
+    interactions = data.frame(from = updatet_targets, to = df[,'regomic'],
                               coef = as.numeric(format(round(df[,4], 4), scientific = FALSE)), sign = ifelse(df[,4]>0,'p','n'))
     
     ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = TRUE)
@@ -2609,7 +2619,10 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     )
     RCy3::setEdgeSourceArrowColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d'    )
     RCy3::setNodeShapeMapping('omic', table.column.values = omic_c, shapes = nshaps )
-    RCy3::setEdgeColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d')
+    RCy3::setEdgeColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d') 
+    
+    # Set labels as names
+    RCy3::setNodeLabelMapping('label')
     
     if(diff){
       RCy3::setEdgeLineStyleMapping('line',c('s','e','d','v','p'),c('SOLID','EQUAL_DASH','DOT','VERTICAL_SLASH','PARALLEL_LINES'))
@@ -2683,16 +2696,27 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       #Add the line type and sign
       df = DifLineType(df)
       
+      # Define unique names
+      df = df %>% mutate(regomic = paste(omic, regulator, sep = "_"))
       #Data.frame of that network
-      nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
-                         omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
-      # If there is any duplicated id delate the targetF
-      nodes = nodes %>%
-        group_by(id) %>%
-        filter(!(n() > 1 & omic == "targetF")) %>%
+      nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,"regomic"])),
+                         omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regomic','omic')])[,2]))
+      # Filter targetF if duplicates
+      nodes = nodes %>% 
+        rowwise() %>%
+        mutate(label = sub(paste0(omic, "_"), "", id)) %>%
+        group_by(label) %>%
+        filter(!(n() == 2 & (omic == "targetF"))) %>%
         ungroup()
       
-      interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
+      # Update the interactions if 'targetF' has been renamed.
+      mapeo_ids <- nodes$id
+      names(mapeo_ids) <- nodes$label
+      updatet_targets <- ifelse(df[,'targetF'] %in% names(mapeo_ids), 
+                                mapeo_ids[df[,'targetF']], 
+                                df[,'targetF'])
+      
+      interactions = data.frame(from = updatet_targets, to = df[,'regomic'],
                                 sign = df[,8], line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = TRUE)
@@ -2805,16 +2829,27 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       #Add the line type and sign
       df = DifLineType(df)
       
+      # Define unique names
+      df = df %>% mutate(regomic = paste(omic, regulator, sep = "_"))
       #Data.frame of that network
-      nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,'regulator'])),
-                         omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regulator','omic')])[,2]))
-      # If there is any duplicated id delate the targetF
-      nodes = nodes %>%
-        group_by(id) %>%
-        filter(!(n() > 1 & omic == "targetF")) %>%
+      nodes = data.frame(id = c(unique(df[,'targetF']),unique(df[,"regomic"])),
+                         omic = c(rep('targetF',length(unique(df[,'targetF']))),unique(df[,c('regomic','omic')])[,2]))
+      # Filter targetF if duplicates
+      nodes = nodes %>% 
+        rowwise() %>%
+        mutate(label = sub(paste0(omic, "_"), "", id)) %>%
+        group_by(label) %>%
+        filter(!(n() == 2 & (omic == "targetF"))) %>%
         ungroup()
       
-      interactions = data.frame(from = df[,'targetF'], to = df[,'regulator'],
+      # Update the interactions if 'targetF' has been renamed.
+      mapeo_ids <- nodes$id
+      names(mapeo_ids) <- nodes$label
+      updatet_targets <- ifelse(df[,'targetF'] %in% names(mapeo_ids), 
+                                mapeo_ids[df[,'targetF']], 
+                                df[,'targetF'])
+      
+      interactions = data.frame(from = updatet_targets, to = df[,'regomic'],
                                 sign = df[,8], line = df[,7])
       
       ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
