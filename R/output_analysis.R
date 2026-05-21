@@ -2546,14 +2546,15 @@ differentialRegPlot = function(output, outputRegpcond){
 #' @param pc Value between 0 and 1 for the proportion of significant/relevant regulators to be plotted in the network. When having networks with many nodes, users can decide to only plot the regulators with the highest coefficients in the models (in absolute value). By default, 0, which means that all significant/relevant regulators will be plotted.
 #' @param pathway If provided, the function will print the regulatory network involved in the specified pathway instead of the entire regulatory network. By default, NULL.
 #' @param annotation Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.
+#' @param arrows If TRUE,  a directed network is generated in which the arrowhead is triangular if it represents activation and flat if it represents repression. By default, FALSE.
 #' @param save If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.
 #' @return Plot of the network induced from more.
 #' @export
 
 
-networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 = NULL, pc = 0, pathway= NULL, annotation = NULL, save=FALSE) {
+networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 = NULL, pc = 0, pathway= NULL, annotation = NULL, arrows=FALSE, save=FALSE) {
   
-  create_graph <- function(df,pc) {
+  create_graph <- function(df,pc, arrows = FALSE) {
     
     #Remove rows with 0 coef
     df = df[df[,4] != 0, ]
@@ -2585,12 +2586,12 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     interactions = data.frame(from = updatet_targets, to = df[,'regomic'],
                               coef = as.numeric(format(round(df[,4], 4), scientific = FALSE)), sign = ifelse(df[,4]>0,'p','n'))
     
-    ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = TRUE)
+    ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = arrows)
     
     return(ig)
   }
   
-  create_network <- function(mygraph, group_names,diff) {
+  create_network <- function(mygraph, group_names,diff, arrows) {
     
     cy_network <- RCy3::createNetworkFromIgraph(mygraph, group_names)
     
@@ -2615,13 +2616,30 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     } 
     
     # Add direction 
-    RCy3::setEdgeSourceArrowShapeMapping(
-      table.column = 'sign',
-      table.column.values = c('n', 'p'),
-      shapes = c('T', 'ARROW'),
-      #mapping.type = 'd'
-    )
-    RCy3::setEdgeSourceArrowColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d'    )
+    # RCy3::setEdgeSourceArrowShapeMapping(
+    #   table.column = 'sign',
+    #   table.column.values = c('n', 'p'),
+    #   shapes = c('T', 'ARROW'),
+    #   #mapping.type = 'd'
+    # )
+    
+    if(arrows){ 
+      RCy3::setEdgeSourceArrowShapeMapping(
+        table.column = 'sign',
+        table.column.values = c('n', 'p'),
+        shapes = c('T', 'ARROW'),
+        #mapping.type = 'd'
+      )
+      RCy3::setEdgeSourceArrowColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d'    )
+    }else{
+      RCy3::setEdgeSourceArrowShapeMapping(
+        table.column = 'sign',
+        table.column.values = c('n', 'p'),
+        shapes = c("NONE", "NONE")
+      )
+    }
+    
+    #RCy3::setEdgeSourceArrowColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d'    )
     RCy3::setNodeShapeMapping('omic', table.column.values = omic_c, shapes = nshaps )
     RCy3::setEdgeColorMapping('sign', c('n','p'), c('#FF3333','#5577FF'),mapping.type='d') 
     
@@ -2671,7 +2689,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
         
         ig = create_graph(df,pc)
         if(i == 1){
-          create_network(ig, colnames(outputRegpcond)[ngroups[i]],diff = FALSE)
+          create_network(ig, colnames(outputRegpcond)[ngroups[i]],diff = FALSE, arrows)
         }  else{
           RCy3::createNetworkFromIgraph(ig, colnames(outputRegpcond)[ngroups[i]])
         }
@@ -2682,7 +2700,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       ngroup <- grep(group1, colnames(outputRegpcond))
       df = outputRegpcond[, c(1, 2, 3, ngroup)]
       ig = create_graph(df,pc)
-      create_network(ig, colnames(outputRegpcond)[ngroup],diff = FALSE)
+      create_network(ig, colnames(outputRegpcond)[ngroup],diff = FALSE, arrows)
     } else {
       #Look for the groups to consider
       gr1 <- grep(group1, colnames(outputRegpcond))
@@ -2723,9 +2741,9 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       interactions = data.frame(from = updatet_targets, to = df[,'regomic'],
                                 sign = df[,8], line = df[,7])
       
-      ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = TRUE)
+      ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = arrows)
       
-      create_network(ig, paste0(colnames(outputRegpcond)[gr2], '-', colnames(outputRegpcond)[gr1]) ,diff = TRUE)
+      create_network(ig, paste0(colnames(outputRegpcond)[gr2], '-', colnames(outputRegpcond)[gr1]) ,diff = TRUE, arrows)
     }
     
   } else {
@@ -2758,7 +2776,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
                               vertex.size = 3,
                               vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
                               edge.color = "blue",
-                              edge.arrow.mode = 1,
+                              edge.arrow.mode = ifelse(arrows, 1, 0),
                               edge.arrow.size = 0.1,
                               edge.arrow.width = 1)
           # Negative vertex
@@ -2770,7 +2788,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
                               vertex.color = "transparent",
                               vertex.frame.color = "transparent",
                               edge.color = "red",
-                              edge.arrow.mode = 1,
+                              edge.arrow.mode = ifelse(arrows, 1, 0),
                               edge.arrow.size = 0.001,
                               edge.arrow.width = 200)
           
@@ -2800,7 +2818,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
                             vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
                             edge.color = "blue",
-                            edge.arrow.mode = 1,
+                            edge.arrow.mode = ifelse(arrows, 1, 0),
                             edge.arrow.size = 0.1,
                             edge.arrow.width = 1)
         # Negative vertex
@@ -2812,7 +2830,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
                             vertex.color = "transparent",
                             vertex.frame.color = "transparent",
                             edge.color = "red",
-                            edge.arrow.mode = 1,
+                            edge.arrow.mode = ifelse(arrows, 1, 0),
                             edge.arrow.size = 0.001,
                             edge.arrow.width = 200)
       }
@@ -2856,7 +2874,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
       interactions = data.frame(from = updatet_targets, to = df[,'regomic'],
                                 sign = df[,8], line = df[,7])
       
-      ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = FALSE)
+      ig = igraph::graph_from_data_frame(interactions, vertices = nodes, directed = arrows)
       
       if(save){
         igraph::write_graph(ig, format = 'gml', file = paste0(colnames(outputRegpcond)[gr2],'-',colnames(outputRegpcond)[gr1], '.gml'))
@@ -2877,7 +2895,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
                             vertex.size = 3,
                             vertex.color = as.factor(igraph::vertex_attr(ig)$omic),
                             edge.color = "blue",
-                            edge.arrow.mode = 1,
+                            edge.arrow.mode = ifelse(arrows, 1, 0),
                             edge.arrow.size = 0.1,
                             edge.arrow.width = 1)
         # Negative vertex
@@ -2889,7 +2907,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
                             vertex.color = "transparent",
                             vertex.frame.color = "transparent",
                             edge.color = "red",
-                            edge.arrow.mode = 1,
+                            edge.arrow.mode = ifelse(arrows, 1, 0),
                             edge.arrow.size = 0.001,
                             edge.arrow.width = 200)
       }
