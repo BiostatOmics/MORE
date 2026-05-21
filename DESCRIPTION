@@ -1,7 +1,7 @@
 Package: MORE
 Type: Package
 Title: Multi-Omics REgulation (MORE)
-Version: 1.0.0
+Version: 1.0.1
 Author: Maider Aguerralde Martin, Blanca Tomás Riquelme, Sonia Tarazona
 Description: MORE is a method which facilitate the task of applying regression models to multi-omic data. The goal of MORE is to model a target omic expression as a function of experimental variables, such as treatment, and the potential regulators of a given target feature (e.g. a gene). MORE has several functionalities to filter regulators: with low variation, missing data and correlated regulators. It also applies advanced variable selection techniques such as ElasticNet, Iterative Sparse Group Lasso or Jack-knife or permutation resampling techniques depending on the type of model to apply (MLR or PLS).
 License: GPL-2

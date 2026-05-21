@@ -12,6 +12,7 @@ networkMORE(
   pc = 0,
   pathway = NULL,
   annotation = NULL,
+  arrows = FALSE,
   save = FALSE
 )
 }
@@ -29,6 +30,8 @@ networkMORE(
 \item{pathway}{If provided, the function will print the regulatory network involved in the specified pathway instead of the entire regulatory network. By default, NULL.}
 
 \item{annotation}{Annotation matrix with target features in the first column, pathway ID in the second and pathway name in the third. Only necessary when a specific pathway has to be plotted. By default, NULL.}
+
+\item{arrows}{If TRUE,  a directed network is generated in which the arrowhead is triangular if it represents activation and flat if it represents repression. By default, FALSE.}
 
 \item{save}{If TRUE a gml extension network is saved when cytoscape = FALSE. By default, FALSE.}
 }
