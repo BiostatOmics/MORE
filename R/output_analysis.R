@@ -2613,15 +2613,7 @@ networkMORE <- function(outputRegpcond, cytoscape = TRUE, group1 = NULL, group2 
     if('targetF'%in% omic_c){
       i=grep('targetF', omic_c)
       nshaps[i]<-'RECTANGLE'
-    } 
-    
-    # Add direction 
-    # RCy3::setEdgeSourceArrowShapeMapping(
-    #   table.column = 'sign',
-    #   table.column.values = c('n', 'p'),
-    #   shapes = c('T', 'ARROW'),
-    #   #mapping.type = 'd'
-    # )
+    }  
     
     if(arrows){ 
       RCy3::setEdgeSourceArrowShapeMapping(
